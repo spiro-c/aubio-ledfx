@@ -31,7 +31,7 @@ gen_sources = custom_target('generate_python_sources',
   depend_files: gen_external,
 )
 
-# Python extension sources
+# Python extension sources (static files only)
 pyaubio_sources = files(
   'ext/aubiomodule.c',
   'ext/aubioproxy.c',
@@ -46,9 +46,8 @@ pyaubio_sources = files(
   'ext/ufuncs.c',
 )
 
-# Add generated sources
+# Add pre-generated wrapper sources (these exist in the source tree)
 pyaubio_sources += files(
-  'gen/aubio-generated.c',
   'gen/gen-dct.c',
   'gen/gen-mfcc.c',
   'gen/gen-notes.c',
@@ -61,6 +60,9 @@ pyaubio_sources += files(
   'gen/gen-tss.c',
   'gen/gen-wavetable.c',
 )
+
+# Add the generated source from custom_target
+pyaubio_sources += gen_sources
 
 # Include directories for Python extension
 pyaubio_inc = include_directories('ext', 'gen', '../src')

@@ -84,7 +84,7 @@ The latest version of the documentation can be found at:
 Quick Start - Building aubio
 ----------------------------
 
-aubio uses the [Meson build system](https://mesonbuild.com/) and compiles on Linux, macOS, Windows, and iOS.
+aubio uses the [Meson build system](https://mesonbuild.com/) and [vcpkg](https://vcpkg.io) for dependency management. It compiles on Linux, macOS, Windows, and iOS.
 
 ### Prerequisites
 
@@ -93,11 +93,26 @@ aubio uses the [Meson build system](https://mesonbuild.com/) and compiles on Lin
 - **C compiler**: GCC, Clang, or MSVC
 - **Python** >= 3.8 (for Python bindings)
 - **NumPy** (for Python bindings): `pip install numpy`
+- **vcpkg** (optional, for automatic dependency management): See [vcpkg installation](https://vcpkg.io/en/getting-started.html)
+
+### Dependency Management with vcpkg
+
+aubio uses vcpkg manifest mode (vcpkg.json) to automatically manage dependencies. If vcpkg is installed, dependencies will be fetched automatically during build.
+
+```bash
+# Install vcpkg (one-time setup)
+git clone https://github.com/microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh  # or .bat on Windows
+export VCPKG_ROOT=$(pwd)/vcpkg
+export PATH=$VCPKG_ROOT:$PATH
+```
+
+Dependencies (libsndfile, libsamplerate, fftw3) will be installed automatically via vcpkg.json when you build.
 
 ### Building the C Library
 
 ```bash
-# Configure the build
+# Configure the build (vcpkg will install dependencies automatically)
 meson setup builddir
 
 # Compile

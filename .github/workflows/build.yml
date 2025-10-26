@@ -82,6 +82,8 @@ jobs:
         env:
           # Build only for the native architecture (no cross-compilation)
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          # Use pre-installed vcpkg on GitHub runners
+          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
           
           # All other configuration is in pyproject.toml
 

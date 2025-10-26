@@ -64,6 +64,80 @@ message('Library version: ' + lib_version)
 cc = meson.get_compiler('c')
 host_system = host_machine.system()
 
+# vcpkg integration for cross-platform dependency management
+vcpkg_exe = find_program('vcpkg', required: false)
+if vcpkg_exe.found()
+  message('vcpkg found, installing dependencies from vcpkg.json manifest...')
+  
+  # Determine vcpkg triplet based on host system and architecture
+  if host_system == 'windows'
+    if host_machine.cpu_family() == 'x86_64'
+      vcpkg_triplet = 'x64-windows'
+    elif host_machine.cpu_family() == 'x86'
+      vcpkg_triplet = 'x86-windows'
+    elif host_machine.cpu_family() == 'aarch64'
+      vcpkg_triplet = 'arm64-windows'
+    else
+      vcpkg_triplet = 'x64-windows'
+    endif
+  elif host_system == 'darwin'
+    if host_machine.cpu_family() == 'aarch64'
+      vcpkg_triplet = 'arm64-osx'
+    else
+      vcpkg_triplet = 'x64-osx'
+    endif
+  elif host_system == 'linux'
+    if host_machine.cpu_family() == 'aarch64'
+      vcpkg_triplet = 'arm64-linux'
+    else
+      vcpkg_triplet = 'x64-linux'
+    endif
+  endif
+  
+  message('Using vcpkg triplet: ' + vcpkg_triplet)
+  
+  # Install vcpkg dependencies
+  vcpkg_result = run_command(
+    vcpkg_exe,
+    'install',
+    '--triplet=' + vcpkg_triplet,
+    '--x-wait-for-lock',
+    '--x-manifest-root=' + meson.project_source_root(),
+    '--x-install-root=' + meson.project_source_root() / 'vcpkg_installed',
+    check: false
+  )
+  
+  if vcpkg_result.returncode() == 0
+    message('vcpkg dependencies installed successfully')
+    
+    # Set up pkg-config and cmake paths for vcpkg
+    vcpkg_installed_dir = meson.project_source_root() / 'vcpkg_installed' / vcpkg_triplet
+    
+    # Add vcpkg paths to environment
+    add_project_arguments(
+      '-I' + vcpkg_installed_dir / 'include',
+      language: 'c'
+    )
+    add_project_link_arguments(
+      '-L' + vcpkg_installed_dir / 'lib',
+      language: 'c'
+    )
+    
+    # Set PKG_CONFIG_PATH for dependency discovery
+    pkg_config_env = environment()
+    pkg_config_env.prepend('PKG_CONFIG_PATH', vcpkg_installed_dir / 'lib' / 'pkgconfig')
+    pkg_config_env.prepend('PKG_CONFIG_PATH', vcpkg_installed_dir / 'share' / 'pkgconfig')
+    
+    # Store vcpkg paths for later use
+    meson.add_devenv(pkg_config_env)
+  else
+    warning('vcpkg install failed, falling back to system dependencies')
+    message(vcpkg_result.stderr())
+  endif
+else
+  message('vcpkg not found, using system dependencies')
+endif
+
 # Configuration data
 conf_data = configuration_data()
 conf_data.set('HAVE_CONFIG_H', 1)

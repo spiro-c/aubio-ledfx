@@ -66,9 +66,8 @@ pyaubio_sources = files(
 pyaubio_sources += gen_wrapper_sources
 
 # Include directories for Python extension
-# Note: gen_wrapper_sources[1] is aubio-generated.h, we get its directory for includes
-gen_inc = include_directories(meson.current_build_dir())
-pyaubio_inc = [include_directories('ext', '../src'), gen_inc]
+# The current build directory ('.') is included to find generated aubio-generated.h
+pyaubio_inc = [include_directories('ext', '../src', '.')]
 
 # Determine if we should build using installed libaubio or embed it
 # For now, we'll link against the libaubio we just built

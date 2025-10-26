@@ -88,7 +88,7 @@ if host_system == 'darwin'
     '-framework', 'CoreFoundation',
     '-framework', 'AudioToolbox',
   ]
-elif host_system == 'windows'
+else
   pyaubio_link_args = []
 endif
 

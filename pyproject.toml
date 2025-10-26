@@ -54,10 +54,16 @@ test-requires = ["pytest", "numpy"]
 test-command = "pytest {project}/python/tests -v || true"
 
 [tool.cibuildwheel.linux]
-# vcpkg is not available via yum, so we install dependencies directly instead
-# This is more efficient for CI/CD than using vcpkg in containers
+# Linux: Install dependencies via yum (AlmaLinux container)
+# Note: rubberband and ffmpeg may not be available in default repos
 before-all = [
-    "yum install -y libsndfile-devel libsamplerate-devel libsamplerate fftw-devel",
+    # Enable EPEL and PowerTools for additional packages
+    "yum install -y epel-release",
+    "yum config-manager --set-enabled powertools || yum config-manager --set-enabled crb || true",
+    # Install available audio processing libraries
+    "yum install -y libsndfile-devel libsamplerate-devel fftw-devel",
+    # Try to install ffmpeg-free-devel if available (RHEL 9+ / AlmaLinux 9+)
+    "yum install -y ffmpeg-free-devel || true",
 ]
 
 [tool.cibuildwheel.windows]
@@ -73,7 +79,12 @@ CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows"
 PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows\\share\\pkgconfig"
 
 [tool.cibuildwheel.macos]
-# macOS deployment target for compatibility
+# macOS: Use Homebrew to install dependencies
+# GitHub Actions macOS runners have Homebrew pre-installed
+before-all = [
+    "brew install libsndfile libsamplerate fftw rubberband ffmpeg pkg-config",
+]
+# Set environment for compatibility and dependency discovery
 environment = {MACOSX_DEPLOYMENT_TARGET="11.0"}
 
 [tool.meson-python]

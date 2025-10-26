@@ -81,21 +81,92 @@ The latest version of the documentation can be found at:
 
   https://aubio.org/documentation
 
-Build Instructions
-------------------
+Quick Start - Building aubio
+----------------------------
 
-aubio compiles on Linux, Mac OS X, Windows, Cygwin, and iOS.
+aubio uses the [Meson build system](https://mesonbuild.com/) and compiles on Linux, macOS, Windows, and iOS.
 
-To compile aubio, you should be able to simply run:
+### Prerequisites
 
-    make
+- **Meson** >= 0.58.0: `pip install meson` or `apt install meson`
+- **Ninja**: `pip install ninja` or `apt install ninja-build`
+- **C compiler**: GCC, Clang, or MSVC
+- **Python** >= 3.8 (for Python bindings)
+- **NumPy** (for Python bindings): `pip install numpy`
 
-To compile the python module:
+### Building the C Library
 
-    ./setup.py build
+```bash
+# Configure the build
+meson setup builddir
 
-See the [manual](https://aubio.org/manual/latest/) for more information about
-[installing aubio](https://aubio.org/manual/latest/installing.html).
+# Compile
+meson compile -C builddir
+
+# Install (optional)
+meson install -C builddir
+```
+
+### Building Python Wheels
+
+aubio uses [meson-python](https://meson-python.readthedocs.io/) for Python packaging.
+
+#### Using pip (recommended)
+
+```bash
+# Install from source directory
+pip install .
+
+# Or build a wheel
+pip wheel . --no-deps
+```
+
+#### Using uv (faster alternative)
+
+```bash
+# Install uv if you haven't already
+pip install uv
+
+# Build a wheel
+uv build --wheel
+
+# Install the wheel
+pip install dist/aubio-*.whl
+```
+
+### Build Options
+
+Common build options (use with `meson setup -Doption=value builddir`):
+
+- `-Dexamples=true/false` - Build example programs (default: false)
+- `-Dtests=true/false` - Build test suite (default: false)
+- `-Ddocs=true/false` - Build documentation (default: false)
+- `-Ddouble=true/false` - Compile in double precision (default: false)
+
+Example:
+```bash
+meson setup builddir -Dexamples=true -Dtests=true
+meson compile -C builddir
+meson test -C builddir
+```
+
+### Platform-Specific Notes
+
+**Windows:** Requires MSVC or MinGW-w64. The shared library is not built on Windows by default (only static library and Python extension).
+
+**macOS:** Automatically detects and uses the Accelerate framework for optimized FFT operations.
+
+**Linux:** Install optional dependencies for additional features:
+- `libsndfile-dev` - For audio file I/O
+- `libsamplerate-dev` - For sample rate conversion  
+- `libfftw3-dev` - For FFTW3 FFT implementation
+- `libjack-dev` - For JACK audio support
+
+### Documentation
+
+For comprehensive build documentation, see:
+- [`doc/building.rst`](doc/building.rst) - Complete build guide
+- [`doc/meson_reference.rst`](doc/meson_reference.rst) - Quick reference for common tasks
 
 Citation
 --------

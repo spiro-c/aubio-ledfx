@@ -2,7 +2,6 @@
 include AUTHORS COPYING README.md VERSION ChangeLog
 include pyproject.toml
 include python/README.md
-include this_version.py
 
 # Meson build files (required for meson-python)
 include meson.build meson_options.txt
@@ -20,12 +19,17 @@ recursive-include tests *.h *.c *.py
 
 # Python extension files
 include python/ext/*.h python/ext/*.c
-# Note: python/gen/*.c files are generated at build time by gen_external.py
-# and do not need to be in the source distribution
+
+# Python package and demos
 recursive-include python/lib *.py
+recursive-include python/demos *.py
+
+# Python tests
 include python/README.md
 include python/tests/eval_pitch
 include python/tests/*.expected
+recursive-include python/tests/sounds *.wav
+include python/tests/*.py
 
 # Documentation
 include doc/*.txt doc/*.rst doc/*.cfg doc/Makefile doc/make.bat doc/conf.py
@@ -34,9 +38,3 @@ exclude doc/full.cfg
 # Scripts
 include scripts/* scripts/apple/Info.plist scripts/apple/Modules/module.modulemap
 
-# Legacy build system (keep for reference)
-include requirements.txt
-include waf_gensyms.py
-include waf
-recursive-include waflib *.py
-include Makefile wscript */wscript_build

@@ -74,7 +74,7 @@ pyaubio_inc = [include_directories('ext', '../src', '.')]
 pyaubio_c_args = [
   '-DHAVE_CONFIG_H',
   '-DUSE_LOCAL_AUBIO',
-  '-DAUBIO_VERSION="' + aubio_version + '"',
+  '-DAUBIO_VERSION=' + aubio_version,
 ]
 
 # Platform-specific args

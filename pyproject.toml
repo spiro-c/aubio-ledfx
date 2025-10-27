@@ -60,16 +60,16 @@ before-all = [
     "yum install -y git zip unzip tar curl make",
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then scl enable devtoolset-10 -- bash -c 'export CC=/opt/rh/devtoolset-10/root/usr/bin/gcc && export CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ && /tmp/vcpkg/vcpkg install --triplet=x64-linux-release --overlay-triplets=/tmp/vcpkg/triplets/community'; fi",
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then scl enable devtoolset-10 -- bash -c 'export CC=/opt/rh/devtoolset-10/root/usr/bin/gcc && export CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ && /tmp/vcpkg/vcpkg install --triplet=arm64-linux-release --overlay-triplets=/tmp/vcpkg/triplets/community'; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then scl enable devtoolset-10 -- bash -c 'export CC=/opt/rh/devtoolset-10/root/usr/bin/gcc && export CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ && VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux'; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then scl enable devtoolset-10 -- bash -c 'export CC=/opt/rh/devtoolset-10/root/usr/bin/gcc && export CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ && VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux'; fi",
 ]
 
 
 
 [tool.cibuildwheel.linux.environment]
 # Set paths so Meson can find vcpkg packages based on architecture
-CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux-release:{project}/vcpkg_installed/arm64-linux-release"
-PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux-release/lib/pkgconfig:{project}/vcpkg_installed/x64-linux-release/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-release/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-release/share/pkgconfig"
+CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux"
+PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig"
 CC = "/opt/rh/devtoolset-10/root/usr/bin/gcc"
 CXX = "/opt/rh/devtoolset-10/root/usr/bin/g++"
 
@@ -77,36 +77,34 @@ CXX = "/opt/rh/devtoolset-10/root/usr/bin/g++"
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building
 # GitHub Actions runners have vcpkg pre-installed at VCPKG_INSTALLATION_ROOT
-# Note: rubberband doesn't support x64-windows-static, so we use x64-windows (dynamic)
-# The DLLs will need to be bundled with the wheel
+# x64-windows-release is in the main triplets folder (not community)
 before-all = [
-    "if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-release --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
+    "if not exist vcpkg_installed set VCPKG_BUILD_TYPE=release && %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
 ]
 
 
 [tool.cibuildwheel.windows.environment]
 # Set paths so Meson can find vcpkg packages via CMake and pkg-config
-CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows-release"
-PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows-release\\share\\pkgconfig"
+CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows"
+PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows\\share\\pkgconfig"
 
 
 [tool.cibuildwheel.macos]
 # macOS: Use vcpkg to build dependencies from source targeting specific deployment targets
 # This ensures compatibility with older macOS versions (Homebrew builds for current OS only)
 # The MACOSX_DEPLOYMENT_TARGET is set in the workflow per-arch before vcpkg runs
-# Use community release triplets to skip Debug builds and speed up installation
+# VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
 before-all = [
-    "if [ $(uname -m) = 'x86_64' ]; then $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx-release --overlay-triplets=$VCPKG_INSTALLATION_ROOT/triplets/community --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
-    "if [ $(uname -m) = 'arm64' ]; then $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx-release --overlay-triplets=$VCPKG_INSTALLATION_ROOT/triplets/community --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
 ]
 
 
 
 [tool.cibuildwheel.macos.environment]
 # Set paths so Meson can find vcpkg packages based on architecture
-# A bit redundant since we have paths for each arch in the workflow but ensures both are available
-CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-osx-release:{project}/vcpkg_installed/arm64-osx-release"
-PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-osx-release/lib/pkgconfig:{project}/vcpkg_installed/x64-osx-release/share/pkgconfig:{project}/vcpkg_installed/arm64-osx-release/lib/pkgconfig:{project}/vcpkg_installed/arm64-osx-release/share/pkgconfig"
+CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-osx:{project}/vcpkg_installed/arm64-osx"
+PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-osx/lib/pkgconfig:{project}/vcpkg_installed/x64-osx/share/pkgconfig:{project}/vcpkg_installed/arm64-osx/lib/pkgconfig:{project}/vcpkg_installed/arm64-osx/share/pkgconfig"
 
 
 [tool.meson-python]

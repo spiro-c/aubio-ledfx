@@ -57,8 +57,8 @@ test-command = "pytest {project}/python/tests || true"
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
 before-all = [
-    # Install build tools needed by vcpkg
-    "yum install -y git zip unzip tar curl",
+    # Install build tools needed by vcpkg and compilation
+    "yum install -y git zip unzip tar curl gcc-c++ make",
     # Clone and bootstrap vcpkg (not available in yum for manylinux)
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",

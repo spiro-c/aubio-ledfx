@@ -64,10 +64,11 @@ before-all = [
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
     # Install dependencies based on architecture
     # x64-linux and arm64-linux triplets provide static libraries by default
-    # --x-buildtype=release skips Debug builds to speed up installation
+    # VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
+    "cd {project}",
     "ARCH=$(uname -m)",
-    "if [ \"$ARCH\" = \"x86_64\" ]; then vcpkg install --triplet=x64-linux --x-buildtype=release; fi",
-    "if [ \"$ARCH\" = \"aarch64\" ]; then vcpkg install --triplet=arm64-linux --x-buildtype=release; fi",
+    "if [ \"$ARCH\" = \"x86_64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
+    "if [ \"$ARCH\" = \"aarch64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
 ]
 
 
@@ -83,7 +84,7 @@ PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/v
 # Note: rubberband doesn't support x64-windows-static, so we use x64-windows (dynamic)
 # The DLLs will need to be bundled with the wheel
 before-all = [
-    "if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows --vcpkg-root=%VCPKG_INSTALLATION_ROOT% --x-buildtype=release",
+    "set VCPKG_BUILD_TYPE=release && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
 ]
 
 
@@ -97,9 +98,10 @@ PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{proj
 # macOS: Use vcpkg to build dependencies from source targeting specific deployment targets
 # This ensures compatibility with older macOS versions (Homebrew builds for current OS only)
 # The MACOSX_DEPLOYMENT_TARGET is set in the workflow per-arch before vcpkg runs
+# VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
 before-all = [
-    "if [ $(uname -m) = 'x86_64' ]; then $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx --x-buildtype=release; fi",
-    "if [ $(uname -m) = 'arm64' ]; then $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx --x-buildtype=release; fi",
+    "if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
 ]
 
 [tool.cibuildwheel.macos.environment]

@@ -79,12 +79,13 @@ CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows"
 PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows\\share\\pkgconfig"
 
 [tool.cibuildwheel.macos]
-# macOS: Use Homebrew to install dependencies
-# GitHub Actions macOS runners have Homebrew pre-installed
-before-all = [
-    "brew install libsndfile libsamplerate fftw rubberband ffmpeg pkg-config",
-]
-# Set environment for compatibility and dependency discovery
+# macOS: Use vcpkg to build dependencies from source targeting specific deployment targets
+# This ensures compatibility with older macOS versions (Homebrew builds for current OS only)
+# vcpkg will be installed by the workflow before building
+
+[tool.cibuildwheel.macos.environment]
+# Paths will be set by workflow based on architecture
+# CMAKE_PREFIX_PATH and PKG_CONFIG_PATH configured per-arch in workflow
 
 
 [tool.meson-python]

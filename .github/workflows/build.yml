@@ -77,33 +77,6 @@ jobs:
         with:
           submodules: 'recursive'
 
-      # Linux: Install vcpkg and build dependencies
-      # cibuildwheel uses manylinux containers (AlmaLinux-based)
-      # vcpkg is not in default repos, so we need EPEL
-      - name: Install vcpkg (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          # Enable EPEL repository for vcpkg
-          sudo yum install -y epel-release
-          # Install vcpkg from EPEL
-          sudo yum install -y vcpkg
-
-      - name: Install vcpkg dependencies (Linux x86_64)
-        if: runner.os == 'Linux' && matrix.arch == 'x86_64'
-        run: |
-          echo "Installing vcpkg dependencies for Linux x86_64"
-          vcpkg install --triplet=x64-linux
-          echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/x64-linux" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/x64-linux/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/x64-linux/share/pkgconfig" >> $GITHUB_ENV
-
-      - name: Install vcpkg dependencies (Linux ARM64)
-        if: runner.os == 'Linux' && matrix.arch == 'aarch64'
-        run: |
-          echo "Installing vcpkg dependencies for Linux ARM64"
-          vcpkg install --triplet=arm64-linux
-          echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/arm64-linux" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/arm64-linux/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/arm64-linux/share/pkgconfig" >> $GITHUB_ENV
-
       # macOS: Install build tools needed by vcpkg
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'

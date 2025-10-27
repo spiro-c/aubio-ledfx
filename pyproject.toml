@@ -54,26 +54,42 @@ test-requires = ["pytest", "numpy"]
 test-command = "pytest {project}/python/tests -v || true"
 
 [tool.cibuildwheel.linux]
-# Linux: vcpkg dependencies are installed by the workflow before cibuildwheel runs
-# No before-all commands needed here
+# Linux: vcpkg dependencies are installed inside the manylinux container
+# Use static libraries for true portability (no external .so dependencies)
+before-all = [
+    # Enable EPEL repository for vcpkg
+    "yum install -y epel-release",
+    # Install vcpkg from EPEL
+    "yum install -y vcpkg",
+    # Install dependencies based on architecture
+    # x64-linux and arm64-linux triplets provide static libraries by default
+    "ARCH=$(uname -m)",
+    "if [ \"$ARCH\" = \"x86_64\" ]; then vcpkg install --triplet=x64-linux; fi",
+    "if [ \"$ARCH\" = \"aarch64\" ]; then vcpkg install --triplet=arm64-linux; fi",
+]
+
 
 [tool.cibuildwheel.linux.environment]
-# Paths are set by workflow based on architecture
-# CMAKE_PREFIX_PATH and PKG_CONFIG_PATH configured per-arch in workflow
+# Set paths so Meson can find vcpkg packages based on architecture
+CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux"
+PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig"
+
 
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building
 # GitHub Actions runners have vcpkg pre-installed at VCPKG_INSTALLATION_ROOT
-# Use x64-windows-static triplet to get static libraries that can be embedded in wheels
+# Note: rubberband doesn't support x64-windows-static, so we use x64-windows (dynamic)
+# The DLLs will need to be bundled with the wheel
 before-all = [
-    "if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-static",
+    "if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows",
 ]
+
 
 [tool.cibuildwheel.windows.environment]
 # Set paths so Meson can find vcpkg packages via CMake and pkg-config
-# Use x64-windows-static paths
-CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows-static"
-PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-static\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows-static\\share\\pkgconfig"
+CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows"
+PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows\\share\\pkgconfig"
+
 
 [tool.cibuildwheel.macos]
 # macOS: Use vcpkg to build dependencies from source targeting specific deployment targets
@@ -86,6 +102,6 @@ PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-static\\lib\\pkgconfi
 
 
 [tool.meson-python]
-# Allow bundling shared libraries on Windows (not needed since we use static linking)
-# but keeps meson-python from complaining
+# Allow bundling shared libraries on Windows
+# Required since we use dynamic linking (x64-windows) due to rubberband not supporting static
 allow-windows-internal-shared-libs = true

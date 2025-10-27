@@ -57,18 +57,19 @@ test-command = "pytest {project}/python/tests || true"
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
 before-all = [
-    # Install build tools needed by vcpkg and compilation
-    "yum install -y git zip unzip tar curl gcc-c++ make",
+    # Install build tools needed by vcpkg
+    "yum install -y git zip unzip tar curl",
     # Clone and bootstrap vcpkg (not available in yum for manylinux)
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
     # Install dependencies based on architecture
     # x64-linux and arm64-linux triplets provide static libraries by default
     # VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
+    # Use devtoolset-10 compiler (already in manylinux2014 container)
     "cd {project}",
     "ARCH=$(uname -m)",
-    "if [ \"$ARCH\" = \"x86_64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
-    "if [ \"$ARCH\" = \"aarch64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
+    "if [ \"$ARCH\" = \"x86_64\" ]; then source /opt/rh/devtoolset-10/enable && VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
+    "if [ \"$ARCH\" = \"aarch64\" ]; then source /opt/rh/devtoolset-10/enable && VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
 ]
 
 

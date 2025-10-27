@@ -77,11 +77,20 @@ jobs:
         with:
           submodules: 'recursive'
 
+      # macOS: Install build tools needed by vcpkg
+      - name: Install build tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # Install nasm (required by vcpkg for ffmpeg assembly optimizations)
+          brew install nasm
+
       # macOS vcpkg setup - build dependencies from source with correct deployment target
       - name: Install vcpkg dependencies (macOS x86_64)
         if: runner.os == 'macOS' && matrix.arch == 'x86_64'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.15"
         run: |
-          echo "Building vcpkg dependencies for macOS x86_64 with deployment target 10.15"
+          echo "Building vcpkg dependencies for macOS x86_64 with deployment target {{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx
           echo "MACOSX_DEPLOYMENT_TARGET=10.15" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/x64-osx" >> $GITHUB_ENV
@@ -89,10 +98,11 @@ jobs:
 
       - name: Install vcpkg dependencies (macOS ARM64)
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: |
-          echo "Building vcpkg dependencies for macOS ARM64 with deployment target 11.0"
+          echo "Building vcpkg dependencies for macOS ARM64 with deployment target {{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx
-          echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/arm64-osx" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/arm64-osx/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/arm64-osx/share/pkgconfig" >> $GITHUB_ENV
 

@@ -57,16 +57,13 @@ test-command = "pytest {project}/python/tests || true"
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
 before-all = [
-    # Install build tools needed by vcpkg and compilation
     "yum install -y git zip unzip tar curl make",
-    # Clone and bootstrap vcpkg (not available in yum for manylinux)
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
-    # Install dependencies in a single command to preserve environment variables
-    # Use devtoolset-10 compiler by setting CC and CXX environment variables
-    "cd {project} && export CC=/opt/rh/devtoolset-10/root/usr/bin/gcc && export CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; elif [ \"$ARCH\" = \"aarch64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then scl enable devtoolset-10 -- bash -lc '/tmp/vcpkg/vcpkg install --triplet=x64-linux-release'; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then scl enable devtoolset-10 -- bash -lc ' /tmp/vcpkg/vcpkg install --triplet=arm64-linux-release'; fi",
 ]
-repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
+
 
 
 [tool.cibuildwheel.linux.environment]
@@ -81,9 +78,8 @@ PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/v
 # Note: rubberband doesn't support x64-windows-static, so we use x64-windows (dynamic)
 # The DLLs will need to be bundled with the wheel
 before-all = [
-    "set VCPKG_BUILD_TYPE=release && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
+    "set VCPKG_BUILD_TYPE=release && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-release --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
 ]
-repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --add-path {project}\\vcpkg_installed\\x64-windows\\bin"
 
 
 [tool.cibuildwheel.windows.environment]
@@ -98,10 +94,10 @@ PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{proj
 # The MACOSX_DEPLOYMENT_TARGET is set in the workflow per-arch before vcpkg runs
 # VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
 before-all = [
-    "if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
-    "if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx-release --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx-release --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
 ]
-repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+
 
 
 [tool.cibuildwheel.macos.environment]

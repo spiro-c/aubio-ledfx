@@ -64,26 +64,20 @@ before-all = [
     "yum install -y git zip unzip tar curl make",
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
-    # Create custom vcpkg toolchain file that explicitly sets devtoolset-10 compiler
-    "mkdir -p /tmp/vcpkg-toolchains",
-    "printf 'set(CMAKE_C_COMPILER /opt/rh/devtoolset-10/root/usr/bin/gcc CACHE FILEPATH \"C compiler\")\\nset(CMAKE_CXX_COMPILER /opt/rh/devtoolset-10/root/usr/bin/g++ CACHE FILEPATH \"C++ compiler\")\\nset(CMAKE_C_COMPILER_FORCED TRUE)\\nset(CMAKE_CXX_COMPILER_FORCED TRUE)\\n' > /tmp/vcpkg-toolchains/devtoolset10.cmake",
-    # Create custom triplets that use our toolchain instead of vcpkg's default linux.cmake
-    "mkdir -p /tmp/vcpkg/triplets/community",
-    "printf 'set(VCPKG_TARGET_ARCHITECTURE x64)\\nset(VCPKG_CRT_LINKAGE dynamic)\\nset(VCPKG_LIBRARY_LINKAGE static)\\nset(VCPKG_CMAKE_SYSTEM_NAME Linux)\\nset(VCPKG_CHAINLOAD_TOOLCHAIN_FILE /tmp/vcpkg-toolchains/devtoolset10.cmake)\\n' > /tmp/vcpkg/triplets/community/x64-linux-manylinux.cmake",
-    "printf 'set(VCPKG_TARGET_ARCHITECTURE arm64)\\nset(VCPKG_CRT_LINKAGE dynamic)\\nset(VCPKG_LIBRARY_LINKAGE static)\\nset(VCPKG_CMAKE_SYSTEM_NAME Linux)\\nset(VCPKG_CHAINLOAD_TOOLCHAIN_FILE /tmp/vcpkg-toolchains/devtoolset10.cmake)\\n' > /tmp/vcpkg/triplets/community/arm64-linux-manylinux.cmake",
-    # Install dependencies using our custom triplets
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux-manylinux; fi",
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux-manylinux; fi",
-
+    # Install dependencies with CC/CXX environment variables set to point vcpkg to devtoolset-10
+    # vcpkg will use these for compiler detection
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then CC=/opt/rh/devtoolset-10/root/usr/bin/gcc CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then CC=/opt/rh/devtoolset-10/root/usr/bin/gcc CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
+    # Debug: show what packages were installed
+    "ls -la {project}/vcpkg_installed/*/lib/pkgconfig/ || true",
 ]
 
 
 
 [tool.cibuildwheel.linux.environment]
 # Set paths so Meson can find vcpkg packages based on architecture
-# Note: Using custom triplet names (x64-linux-manylinux / arm64-linux-manylinux)
-CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux-manylinux:{project}/vcpkg_installed/arm64-linux-manylinux"
-PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux-manylinux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux-manylinux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-manylinux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-manylinux/share/pkgconfig"
+CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux"
+PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig"
 CC = "/opt/rh/devtoolset-10/root/usr/bin/gcc"
 CXX = "/opt/rh/devtoolset-10/root/usr/bin/g++"
 

@@ -61,7 +61,7 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
 before-all = [
-    "yum install -y git zip unzip tar curl make",
+    "yum install -y git zip unzip tar curl make nasm",
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
     # Install dependencies with CC/CXX environment variables set to point vcpkg to devtoolset-10

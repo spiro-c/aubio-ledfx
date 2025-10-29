@@ -66,8 +66,8 @@ before-all = [
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
     # Install dependencies with CC/CXX environment variables set to point vcpkg to devtoolset-10
     # vcpkg will use these for compiler detection
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then CC=/opt/rh/devtoolset-10/root/usr/bin/gcc CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then CC=/opt/rh/devtoolset-10/root/usr/bin/gcc CXX=/opt/rh/devtoolset-10/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
     # Debug: show what packages were installed
     "ls -la {project}/vcpkg_installed/*/lib/pkgconfig/ || true",
 ]
@@ -78,16 +78,17 @@ before-all = [
 # Set paths so Meson can find vcpkg packages based on architecture
 CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux"
 PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig"
-CC = "/opt/rh/devtoolset-10/root/usr/bin/gcc"
-CXX = "/opt/rh/devtoolset-10/root/usr/bin/g++"
+CC = "/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
+CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 
 
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building
 # GitHub Actions runners have vcpkg pre-installed at VCPKG_INSTALLATION_ROOT
-# x64-windows-release is in the main triplets folder (not community)
+# Install to project directory (omit --vcpkg-root) so packages go to vcpkg_installed\
 before-all = [
-    "if not exist vcpkg_installed set VCPKG_BUILD_TYPE=release && %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows --vcpkg-root=%VCPKG_INSTALLATION_ROOT%",
+    "cd {project} && if not exist vcpkg_installed set VCPKG_BUILD_TYPE=release && %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows",
+    "dir {project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig",
 ]
 
 
@@ -102,9 +103,12 @@ PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig;{proj
 # This ensures compatibility with older macOS versions (Homebrew builds for current OS only)
 # The MACOSX_DEPLOYMENT_TARGET is set in the workflow per-arch before vcpkg runs
 # VCPKG_BUILD_TYPE=release skips Debug builds to speed up installation
+# Install to project directory (omit --vcpkg-root) so packages go to vcpkg_installed/
 before-all = [
-    "if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
-    "if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx --vcpkg-root=$VCPKG_INSTALLATION_ROOT; fi",
+    "cd {project} && if [ $(uname -m) = 'x86_64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx; fi",
+    "cd {project} && if [ $(uname -m) = 'arm64' ]; then VCPKG_BUILD_TYPE=release $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx; fi",
+    # Debug: show what packages were installed
+    "ls -la {project}/vcpkg_installed/*/lib/pkgconfig/ || true",
 ]
 
 

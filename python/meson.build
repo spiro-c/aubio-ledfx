@@ -79,7 +79,7 @@ pyaubio_c_args = [
   '-DAUBIO_VERSION=' + aubio_version,
 ]
 
-# Platform-specific args
+# Platform-specific args and dependencies
 if host_system == 'darwin'
   pyaubio_link_args = [
     '-framework', 'CoreFoundation',
@@ -87,9 +87,17 @@ if host_system == 'darwin'
   ]
 elif host_system == 'linux'
   # On Linux, when linking C++ static libraries (rubberband) and pthread-using
-  # libraries (FFmpeg) into a shared Python extension, we must explicitly link
-  # with the C++ standard library and pthread
-  pyaubio_link_args = ['-lstdc++', '-lpthread']
+  # libraries (FFmpeg) into a shared Python extension, we must add these as
+  # dependencies (not just link flags) to ensure proper link order
+  thread_dep = dependency('threads', required: true)
+  dependencies += [thread_dep]
+  
+  # Add C++ standard library as a dependency
+  cpp = meson.get_compiler('cpp')
+  cpp_stdlib = cpp.find_library('stdc++', required: true)
+  dependencies += [cpp_stdlib]
+  
+  pyaubio_link_args = []
 else
   pyaubio_link_args = []
 endif

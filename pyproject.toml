@@ -98,6 +98,9 @@ before-all = [
     "dir {project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig",
 ]
 
+# Install delvewheel for bundling DLLs into wheels
+before-build = "pip install \"meson>=1.9.0\" meson-python ninja \"numpy>=1.26.4\" delvewheel"
+
 # Wheel portability: Use delvewheel to bundle all vcpkg DLLs into the wheel
 # This makes the wheel fully portable - no external DLL dependencies required
 # delvewheel will:

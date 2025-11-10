@@ -93,8 +93,9 @@ elif host_system == 'linux'
   dependencies += [thread_dep]
   
   # Add C++ standard library as a dependency
-  cpp = meson.get_compiler('cpp')
-  cpp_stdlib = cpp.find_library('stdc++', required: true)
+  # Use the C compiler to find libstdc++ (no need for C++ compiler in project)
+  c_compiler = meson.get_compiler('c')
+  cpp_stdlib = c_compiler.find_library('stdc++', required: true)
   dependencies += [cpp_stdlib]
   
   pyaubio_link_args = []

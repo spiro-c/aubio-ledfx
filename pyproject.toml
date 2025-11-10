@@ -92,6 +92,8 @@ before-all = [
     "dir {project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig",
 ]
 
+# Use delvewheel to bundle DLLs from vcpkg
+repair-wheel-command = "delvewheel repair --add-path {project}\\vcpkg_installed\\x64-windows\\bin -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.windows.environment]
 # Set paths so Meson can find vcpkg packages via CMake and pkg-config

@@ -65,90 +65,112 @@ cc = meson.get_compiler('c')
 host_system = host_machine.system()
 
 # vcpkg integration for cross-platform dependency management
-vcpkg_exe = find_program('vcpkg', required: false)
-if vcpkg_exe.found()
-  message('vcpkg found, installing dependencies from vcpkg.json manifest...')
-  
-  # Determine vcpkg triplet based on host system and architecture
-  if host_system == 'windows'
-    if host_machine.cpu_family() == 'x86_64'
-      vcpkg_triplet = 'x64-windows'
-    elif host_machine.cpu_family() == 'x86'
-      vcpkg_triplet = 'x86-windows'
-    elif host_machine.cpu_family() == 'aarch64'
-      vcpkg_triplet = 'arm64-windows'
-    else
-      vcpkg_triplet = 'x64-windows'
-    endif
-  elif host_system == 'darwin'
-    if host_machine.cpu_family() == 'aarch64'
-      vcpkg_triplet = 'arm64-osx'
-    else
-      vcpkg_triplet = 'x64-osx'
-    endif
-  elif host_system == 'linux'
-    if host_machine.cpu_family() == 'aarch64'
-      vcpkg_triplet = 'arm64-linux'
-    else
-      vcpkg_triplet = 'x64-linux'
-    endif
+# Note: In CI/CD, vcpkg dependencies are pre-installed by cibuildwheel before-all step
+# Check if dependencies are already installed before running vcpkg
+vcpkg_install_root = meson.project_source_root() / 'vcpkg_installed'
+
+# Determine vcpkg triplet based on host system and architecture
+if host_system == 'windows'
+  if host_machine.cpu_family() == 'x86_64'
+    vcpkg_triplet = 'x64-windows'
+  elif host_machine.cpu_family() == 'x86'
+    vcpkg_triplet = 'x86-windows'
+  elif host_machine.cpu_family() == 'aarch64'
+    vcpkg_triplet = 'arm64-windows'
+  else
+    vcpkg_triplet = 'x64-windows'
   endif
-  
-  message('Using vcpkg triplet: ' + vcpkg_triplet)
-  
-  # Install vcpkg dependencies
-  vcpkg_install_root = meson.project_source_root() / 'vcpkg_installed'
-  vcpkg_result = run_command(
-    vcpkg_exe,
-    'install',
-    '--triplet=' + vcpkg_triplet,
-    '--x-wait-for-lock',
-    '--x-manifest-root=' + meson.project_source_root(),
-    '--x-install-root=' + vcpkg_install_root,
-    check: false
-  )
-  
-  if vcpkg_result.returncode() == 0
-    message('vcpkg dependencies installed successfully')
+elif host_system == 'darwin'
+  if host_machine.cpu_family() == 'aarch64'
+    vcpkg_triplet = 'arm64-osx'
+  else
+    vcpkg_triplet = 'x64-osx'
+  endif
+elif host_system == 'linux'
+  if host_machine.cpu_family() == 'aarch64'
+    vcpkg_triplet = 'arm64-linux'
+  else
+    vcpkg_triplet = 'x64-linux'
+  endif
+endif
+
+message('Using vcpkg triplet: ' + vcpkg_triplet)
+
+# Check if vcpkg dependencies are already installed (e.g., by CI/CD before-all step)
+vcpkg_installed_dir = vcpkg_install_root / vcpkg_triplet
+vcpkg_already_installed = fs.is_dir(vcpkg_installed_dir)
+
+if vcpkg_already_installed
+  message('vcpkg dependencies already installed at: ' + vcpkg_installed_dir)
+  vcpkg_found = true
+else
+  # Dependencies not pre-installed, try to install them now
+  vcpkg_exe = find_program('vcpkg', required: false)
+  if vcpkg_exe.found()
+    message('vcpkg found, installing dependencies from vcpkg.json manifest...')
     
-    # Set up pkg-config and cmake paths for vcpkg
-    vcpkg_installed_dir = vcpkg_install_root / vcpkg_triplet
-    vcpkg_include_dir = vcpkg_installed_dir / 'include'
-    vcpkg_lib_dir = vcpkg_installed_dir / 'lib'
-    vcpkg_bin_dir = vcpkg_installed_dir / 'bin'
-    vcpkg_debug_lib_dir = vcpkg_installed_dir / 'debug' / 'lib'
-    
-    # Add vcpkg include and lib paths
-    add_project_arguments(
-      '-I' + vcpkg_include_dir,
-      language: 'c'
+    # Install vcpkg dependencies
+    vcpkg_result = run_command(
+      vcpkg_exe,
+      'install',
+      '--triplet=' + vcpkg_triplet,
+      '--x-wait-for-lock',
+      '--x-manifest-root=' + meson.project_source_root(),
+      '--x-install-root=' + vcpkg_install_root,
+      check: false
     )
     
-    # On Windows, we need both release and debug lib dirs
-    if host_system == 'windows'
-      add_project_link_arguments(
-        '-L' + vcpkg_lib_dir,
-        '-L' + vcpkg_debug_lib_dir,
-        language: 'c'
-      )
+    if vcpkg_result.returncode() == 0
+      message('vcpkg dependencies installed successfully')
+      vcpkg_found = true
     else
-      add_project_link_arguments(
-        '-L' + vcpkg_lib_dir,
-        language: 'c'
-      )
+      warning('vcpkg install failed, falling back to system dependencies')
+      message(vcpkg_result.stderr())
+      vcpkg_found = false
     endif
-    
-    # Store vcpkg dirs for dependency lookups
-    vcpkg_cmake_prefix_path = vcpkg_installed_dir
-    vcpkg_found = true
   else
-    warning('vcpkg install failed, falling back to system dependencies')
-    message(vcpkg_result.stderr())
+    message('vcpkg not found, using system dependencies')
     vcpkg_found = false
   endif
+endif
+
+# If vcpkg dependencies are available (either pre-installed or just installed), set up paths
+if vcpkg_found
+  # Set up pkg-config and cmake paths for vcpkg
+  vcpkg_include_dir = vcpkg_installed_dir / 'include'
+  vcpkg_lib_dir = vcpkg_installed_dir / 'lib'
+  vcpkg_bin_dir = vcpkg_installed_dir / 'bin'
+  vcpkg_pkgconfig_dir = vcpkg_lib_dir / 'pkgconfig'
+  vcpkg_share_pkgconfig_dir = vcpkg_installed_dir / 'share' / 'pkgconfig'
+  # Note: Debug libraries not used since VCPKG_BUILD_TYPE=release in CI
+  
+  message('vcpkg pkg-config directories:')
+  message('  - ' + vcpkg_pkgconfig_dir)
+  message('  - ' + vcpkg_share_pkgconfig_dir)
+  
+  # Add vcpkg include and lib paths as compiler/linker flags
+  # This ensures that even if pkg-config fails, the compiler can find headers and libs
+  add_project_arguments(
+    '-I' + vcpkg_include_dir,
+    language: 'c'
+  )
+  
+  # Add library search path (release-only since VCPKG_BUILD_TYPE=release)
+  add_project_link_arguments(
+    '-L' + vcpkg_lib_dir,
+    language: 'c'
+  )
+  
+  # Store vcpkg dirs for dependency lookups
+  vcpkg_cmake_prefix_path = vcpkg_installed_dir
+  
+  # Create a list of directories for pkg-config to search
+  # This will be passed to dependency() calls
+  vcpkg_pkg_config_dirs = [vcpkg_pkgconfig_dir, vcpkg_share_pkgconfig_dir]
 else
-  message('vcpkg not found, using system dependencies')
+  message('vcpkg dependencies not available, using system dependencies')
   vcpkg_found = false
+  vcpkg_pkg_config_dirs = []
 endif
 
 # Configuration data
@@ -308,7 +330,7 @@ if host_system == 'darwin' and get_option('apple-audio').auto()
 endif
 
 # libsndfile
-sndfile_dep = dependency('sndfile', version: '>=1.0.4', required: get_option('sndfile'))
+sndfile_dep = dependency('sndfile', version: '>=1.0.4', required: get_option('sndfile'), dirs: vcpkg_pkg_config_dirs)
 if sndfile_dep.found()
   conf_data.set('HAVE_SNDFILE', 1)
   dependencies += sndfile_dep
@@ -317,7 +339,7 @@ endif
 # libsamplerate (not compatible with double precision)
 samplerate_dep = dependency('', required: false)
 if not enable_double
-  samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: get_option('samplerate'))
+  samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: get_option('samplerate'), dirs: vcpkg_pkg_config_dirs)
   if samplerate_dep.found()
     conf_data.set('HAVE_SAMPLERATE', 1)
     dependencies += samplerate_dep
@@ -329,7 +351,7 @@ else
 endif
 
 # rubberband (C++ library, requires C++ standard library)
-rubberband_dep = dependency('rubberband', version: '>=1.3', required: get_option('rubberband'))
+rubberband_dep = dependency('rubberband', version: '>=1.3', required: get_option('rubberband'), dirs: vcpkg_pkg_config_dirs)
 if rubberband_dep.found()
   conf_data.set('HAVE_RUBBERBAND', 1)
   dependencies += rubberband_dep
@@ -355,17 +377,17 @@ if rubberband_dep.found()
 endif
 
 # JACK
-jack_dep = dependency('jack', required: get_option('jack'))
+jack_dep = dependency('jack', required: get_option('jack'), dirs: vcpkg_pkg_config_dirs)
 if jack_dep.found()
   conf_data.set('HAVE_JACK', 1)
   dependencies += jack_dep
 endif
 
 # libav (avcodec, avformat, avutil, swresample)
-avcodec_dep = dependency('libavcodec', version: '>=54.35.0', required: get_option('avcodec'))
-avformat_dep = dependency('libavformat', version: '>=52.3.0', required: get_option('avcodec'))
-avutil_dep = dependency('libavutil', version: '>=52.3.0', required: get_option('avcodec'))
-swresample_dep = dependency('libswresample', version: '>=1.2.0', required: false)
+avcodec_dep = dependency('libavcodec', version: '>=54.35.0', required: get_option('avcodec'), dirs: vcpkg_pkg_config_dirs)
+avformat_dep = dependency('libavformat', version: '>=52.3.0', required: get_option('avcodec'), dirs: vcpkg_pkg_config_dirs)
+avutil_dep = dependency('libavutil', version: '>=52.3.0', required: get_option('avcodec'), dirs: vcpkg_pkg_config_dirs)
+swresample_dep = dependency('libswresample', version: '>=1.2.0', required: false, dirs: vcpkg_pkg_config_dirs)
 
 if avcodec_dep.found() and avformat_dep.found() and avutil_dep.found() and swresample_dep.found()
   conf_data.set('HAVE_LIBAV', 1)
@@ -377,16 +399,16 @@ if avcodec_dep.found() and avformat_dep.found() and avutil_dep.found() and swres
 endif
 
 # vorbis
-vorbisenc_dep = dependency('vorbisenc', required: get_option('vorbis'))
-vorbis_dep = dependency('vorbis', required: get_option('vorbis'))
-ogg_dep = dependency('ogg', required: get_option('vorbis'))
+vorbisenc_dep = dependency('vorbisenc', required: get_option('vorbis'), dirs: vcpkg_pkg_config_dirs)
+vorbis_dep = dependency('vorbis', required: get_option('vorbis'), dirs: vcpkg_pkg_config_dirs)
+ogg_dep = dependency('ogg', required: get_option('vorbis'), dirs: vcpkg_pkg_config_dirs)
 if vorbisenc_dep.found() and vorbis_dep.found() and ogg_dep.found()
   conf_data.set('HAVE_VORBISENC', 1)
   dependencies += [vorbisenc_dep, vorbis_dep, ogg_dep]
 endif
 
 # FLAC
-flac_dep = dependency('flac', required: get_option('flac'))
+flac_dep = dependency('flac', required: get_option('flac'), dirs: vcpkg_pkg_config_dirs)
 if flac_dep.found()
   conf_data.set('HAVE_FLAC', 1)
   dependencies += flac_dep

@@ -89,6 +89,7 @@ jobs:
         if: runner.os == 'macOS' && matrix.arch == 'x86_64'
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.15"
+          VCPKG_BUILD_TYPE: "release"
         run: |
           echo "Building vcpkg dependencies for macOS x86_64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx
@@ -99,6 +100,7 @@ jobs:
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
+          VCPKG_BUILD_TYPE: "release"
         run: |
           echo "Building vcpkg dependencies for macOS ARM64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx

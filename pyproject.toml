@@ -87,19 +87,20 @@ CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 # Windows: Use vcpkg to install dependencies before building
 # GitHub Actions runners have vcpkg pre-installed at VCPKG_INSTALLATION_ROOT
 # Install to project directory (omit --vcpkg-root) so packages go to vcpkg_installed
-# Use community triplet x64-windows-static-md-release for release-only builds (much faster)
+# Use built-in triplet x64-windows-release for release-only builds with dynamic libs
+# (rubberband requires dynamic linking on Windows)
 before-all = [
-    "cd {project} && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-static-md-release",
-    "dir {project}\\vcpkg_installed\\x64-windows-static-md-release\\lib\\pkgconfig",
+    "cd {project} && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-release",
+    "dir {project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig",
 ]
 
-# Use delvewheel to bundle DLLs from vcpkg (note: static triplet means fewer DLLs to bundle)
-repair-wheel-command = "delvewheel repair --add-path {project}\\vcpkg_installed\\x64-windows-static-md-release\\bin -w {dest_dir} {wheel}"
+# Use delvewheel to bundle DLLs from vcpkg (dynamic linking means more DLLs to bundle)
+repair-wheel-command = "delvewheel repair --add-path {project}\\vcpkg_installed\\x64-windows-release\\bin -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.windows.environment]
 # Set paths so Meson can find vcpkg packages via CMake and pkg-config
-CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows-static-md-release"
-PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-static-md-release\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows-static-md-release\\share\\pkgconfig"
+CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows-release"
+PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows-release\\share\\pkgconfig"
 
 
 

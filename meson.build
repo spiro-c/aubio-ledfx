@@ -169,13 +169,9 @@ if vcpkg_found
   # Store vcpkg dirs for dependency lookups
   vcpkg_cmake_prefix_path = vcpkg_installed_dir
   
-  # Create a list of directories for pkg-config to search
-  # This will be passed to dependency() calls
-  vcpkg_pkg_config_dirs = [vcpkg_pkgconfig_dir, vcpkg_share_pkgconfig_dir]
 else
   message('vcpkg dependencies not available, using system dependencies')
   vcpkg_found = false
-  vcpkg_pkg_config_dirs = []
 endif
 
 vcpkg_library_dirs = []
@@ -376,9 +372,9 @@ foreach spec : single_feature_specs
 
   has_version = spec.has_key('version')
   if has_version
-    dep = dependency(spec['pkg'], version: spec['version'], required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: spec['error_message'])
+    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true, not_found_message: spec['error_message'])
   else
-    dep = dependency(spec['pkg'], required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: spec['error_message'])
+    dep = dependency(spec['pkg'], required: false, disabler: true, not_found_message: spec['error_message'])
   endif
 
   if not dep.found() and vcpkg_found and spec.has_key('fallback_libs')
@@ -408,7 +404,7 @@ endforeach
 if not enable_double
   samplerate_opt = get_option('samplerate')
   if not samplerate_opt.disabled()
-    samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: 'libsamplerate support was requested but the dependency could not be found')
+    samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: false, disabler: true, not_found_message: 'libsamplerate support was requested but the dependency could not be found')
     if not samplerate_dep.found() and vcpkg_found
       samplerate_dep = cc.find_library('samplerate', dirs: vcpkg_library_dirs, required: samplerate_opt.enabled())
     endif
@@ -430,7 +426,7 @@ endif
 # rubberband (C++ library, requires C++ standard library)
 rubberband_opt = get_option('rubberband')
 if not rubberband_opt.disabled()
-  rubberband_dep = dependency('rubberband', version: '>=1.3', required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: 'rubberband support was requested but the dependency could not be found')
+  rubberband_dep = dependency('rubberband', version: '>=1.3', required: false, disabler: true, not_found_message: 'rubberband support was requested but the dependency could not be found')
   if not rubberband_dep.found() and vcpkg_found
     rubberband_dep = cc.find_library('rubberband', dirs: vcpkg_library_dirs, required: rubberband_opt.enabled())
   endif
@@ -439,7 +435,7 @@ if not rubberband_opt.disabled()
     dependencies += rubberband_dep
     if host_system == 'darwin'
       add_project_link_arguments('-lc++', language: 'c')
-      sleef_dep = dependency('sleef', required: false, dirs: vcpkg_pkg_config_dirs, disabler: true)
+      sleef_dep = dependency('sleef', required: false, disabler: true)
       if not sleef_dep.found() and vcpkg_found
         sleef_dep = cc.find_library('sleef', dirs: vcpkg_library_dirs, required: false)
       endif
@@ -467,7 +463,7 @@ if not avcodec_opt.disabled()
   libav_deps = []
   libav_missing = false
   foreach spec : libav_specs
-    dep = dependency(spec['pkg'], version: spec['version'], required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: 'libavcodec support was requested but the dependencies could not be found')
+    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true, not_found_message: 'libavcodec support was requested but the dependencies could not be found')
     if not dep.found() and vcpkg_found
       dep = cc.find_library(spec['fallback'], dirs: vcpkg_library_dirs, required: avcodec_opt.enabled())
     endif
@@ -502,7 +498,7 @@ if not vorbis_opt.disabled()
   vorbis_deps = []
   vorbis_missing = false
   foreach spec : vorbis_specs
-    dep = dependency(spec['pkg'], required: false, dirs: vcpkg_pkg_config_dirs, disabler: true, not_found_message: 'Vorbis support was requested but the dependencies could not be found')
+    dep = dependency(spec['pkg'], required: false, disabler: true, not_found_message: 'Vorbis support was requested but the dependencies could not be found')
     if not dep.found() and vcpkg_found
       dep = cc.find_library(spec['fallback'], dirs: vcpkg_library_dirs, required: vorbis_opt.enabled())
     endif

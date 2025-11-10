@@ -86,7 +86,7 @@ CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building
 # GitHub Actions runners have vcpkg pre-installed at VCPKG_INSTALLATION_ROOT
-# Install to project directory (omit --vcpkg-root) so packages go to vcpkg_installed\
+# Install to project directory (omit --vcpkg-root) so packages go to vcpkg_installed
 before-all = [
     "cd {project} && if not exist vcpkg_installed set VCPKG_BUILD_TYPE=release && %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows",
     "dir {project}\\vcpkg_installed\\x64-windows\\lib\\pkgconfig",

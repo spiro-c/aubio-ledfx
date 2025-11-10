@@ -104,6 +104,11 @@ jobs:
         pattern: aubio-ledfx-*
         path: dist/
         merge-multiple: true
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7 # Action to set up uv
+      with:
+        enable-cache: true      
     - name: Publish distribution 📦 to PyPI using uv
       run: uv publish --trusted-publishing always
 
@@ -126,5 +131,9 @@ jobs:
         pattern: aubio-ledfx-*
         path: dist/
         merge-multiple: true
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7 # Action to set up uv
+      with:
+        enable-cache: true      
     - name: Publish distribution 📦 to Test PyPI using uv
       run: uv publish --publish-url https://test.pypi.org/legacy/ --trusted-publishing always

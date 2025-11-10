@@ -85,6 +85,11 @@ if host_system == 'darwin'
     '-framework', 'CoreFoundation',
     '-framework', 'AudioToolbox',
   ]
+elif host_system == 'linux'
+  # On Linux, when linking C++ static libraries (rubberband) and pthread-using
+  # libraries (FFmpeg) into a shared Python extension, we must explicitly link
+  # with the C++ standard library and pthread
+  pyaubio_link_args = ['-lstdc++', '-lpthread']
 else
   pyaubio_link_args = []
 endif

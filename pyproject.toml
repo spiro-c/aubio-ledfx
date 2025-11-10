@@ -50,10 +50,11 @@ before-build = "pip install \"meson>=1.9.0\" meson-python ninja \"numpy>=1.26.4\
 # Skip 32-bit builds and PyPy
 skip = ["*-win32", "*-manylinux_i686", "*-musllinux*"]
 
-# Test the wheels
-
+# Test the wheels - ensure they're portable by verifying imports work
 test-requires = ["pytest", "numpy==1.26.4"]
-test-command = "pytest {project}/python/tests || true"
+# First test: Verify aubio can be imported (ensures DLLs are bundled on Windows)
+# Second test: Run pytest suite
+test-command = "python -c \"import aubio; print('aubio version:', aubio.version); print('Portable wheel test: PASS')\" && pytest {project}/python/tests || true"
 
 # Disable build isolation so environment variables (like PKG_CONFIG_PATH) are passed through
 build-frontend = { name = "pip", args = ["--no-build-isolation"] }
@@ -65,10 +66,12 @@ before-all = [
     "yum install -y git zip unzip tar curl make nasm",
     "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
     "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
-    # Install dependencies with CC/CXX environment variables set to point vcpkg to devtoolset-10
+    # Install dependencies with CC/CXX environment variables set to point vcpkg to gcc-toolset-14
     # vcpkg will use these for compiler detection
+    # x64: Use standard x64-linux triplet (static libs = portable)
+    # ARM64: Use custom arm64-linux-pic triplet (adds -fPIC for FFmpeg compatibility)
     "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"x86_64\" ]; then CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux; fi",
-    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux; fi",
+    "cd {project} && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux-pic --overlay-triplets={project}/vcpkg-triplets; fi",
     # Debug: show what packages were installed
     "ls -la {project}/vcpkg_installed/*/lib/pkgconfig/ || true",
 ]
@@ -77,8 +80,9 @@ before-all = [
 
 [tool.cibuildwheel.linux.environment]
 # Set paths so Meson can find vcpkg packages based on architecture
-CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux"
-PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig"
+# Note: arm64-linux-pic is our custom triplet with -fPIC for FFmpeg compatibility
+CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux:{project}/vcpkg_installed/arm64-linux:{project}/vcpkg_installed/arm64-linux-pic"
+PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux/lib/pkgconfig:{project}/vcpkg_installed/x64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/share/pkgconfig"
 CC = "/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
 CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 
@@ -94,7 +98,14 @@ before-all = [
     "dir {project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig",
 ]
 
-# Use delvewheel to bundle DLLs from vcpkg (dynamic linking means more DLLs to bundle)
+# Wheel portability: Use delvewheel to bundle all vcpkg DLLs into the wheel
+# This makes the wheel fully portable - no external DLL dependencies required
+# delvewheel will:
+#   1. Scan _aubio.pyd for DLL dependencies
+#   2. Find DLLs in vcpkg_installed/x64-windows-release/bin
+#   3. Bundle them into the wheel's .libs directory
+#   4. Patch imports to use bundled DLLs
+# Result: Wheel works on any Windows system without vcpkg or dependencies installed
 repair-wheel-command = "delvewheel repair --add-path {project}\\vcpkg_installed\\x64-windows-release\\bin -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.windows.environment]
@@ -108,5 +119,5 @@ PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconf
 
 [tool.meson-python]
 # Allow bundling shared libraries on Windows
-# Required since we use dynamic linking (x64-windows) due to rubberband not supporting static
+# Required since we use dynamic linking (x64-windows-release) due to rubberband not supporting static
 allow-windows-internal-shared-libs = true

@@ -93,8 +93,10 @@ elif host_system == 'darwin'
   endif
 elif host_system == 'linux'
   if host_machine.cpu_family() == 'aarch64'
-    vcpkg_triplet = 'arm64-linux'
+    # Use custom triplet with -fPIC for ARM64 to avoid relocation errors
+    vcpkg_triplet = 'arm64-linux-pic'
   else
+    # Standard x64-linux triplet works fine (no PIC issues on x64)
     vcpkg_triplet = 'x64-linux'
   endif
 endif
@@ -114,11 +116,12 @@ else
   if vcpkg_exe.found()
     message('vcpkg found, installing dependencies from vcpkg.json manifest...')
     
-    # Install vcpkg dependencies
+    # Install vcpkg dependencies with custom triplets for PIC support
     vcpkg_result = run_command(
       vcpkg_exe,
       'install',
       '--triplet=' + vcpkg_triplet,
+      '--overlay-triplets=' + meson.project_source_root() / 'vcpkg-triplets',
       '--x-wait-for-lock',
       '--x-manifest-root=' + meson.project_source_root(),
       '--x-install-root=' + vcpkg_install_root,
@@ -452,18 +455,6 @@ endif
 
 # libav (avcodec, avformat, avutil, swresample)
 avcodec_opt = get_option('avcodec')
-# Disable FFmpeg on ARM64 Linux when using vcpkg due to PIC issues
-# vcpkg's FFmpeg static libraries on ARM64 are built without -fPIC,
-# causing "dangerous relocation" errors when linking into shared libraries
-if host_system == 'linux' and host_machine.cpu_family() == 'aarch64' and vcpkg_found
-  if avcodec_opt.enabled()
-    error('libavcodec is not supported on ARM64 Linux with vcpkg due to static library PIC issues. Use system FFmpeg instead.')
-  else
-    message('Disabling libavcodec on ARM64 Linux (vcpkg static libraries not built with -fPIC)')
-  endif
-  avcodec_opt = disabler()
-endif
-
 if not avcodec_opt.disabled()
   libav_specs = [
     {'pkg': 'libavcodec', 'version': '>=54.35.0', 'fallback': 'avcodec', 'define': 'HAVE_AVCODEC'},

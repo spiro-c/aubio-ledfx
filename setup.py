@@ -67,7 +67,7 @@ py_readme_file = os.path.join(thisdir, 'python', 'README.md')
 with open(py_readme_file, 'r') as fp:
     long_description = ''.join(fp.readlines()[3:])
 
-distrib = setup(name='aubio',
+distrib = setup(name='aubio-ledfx',
     version = __version__,
     packages = ['aubio'],
     package_dir = {'aubio': 'python/lib/aubio'},
@@ -79,8 +79,8 @@ distrib = setup(name='aubio',
     author = 'Paul Brossier',
     author_email = 'piem@aubio.org',
     maintainer = 'Paul Brossier',
-    maintainer_email = 'piem@aubio.org',
-    url = 'https://aubio.org/',
+    maintainer_email = 'hello@ledfx.app',
+    url = 'https://github.com/LedFx/aubio-ledfx/',
     platforms = 'any',
     classifiers = classifiers,
     install_requires = ['numpy'],

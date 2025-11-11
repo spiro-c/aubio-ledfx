@@ -62,25 +62,44 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 [tool.cibuildwheel.linux]
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
-before-all = [
-    "yum install -y git zip unzip tar curl make nasm",
-    "git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg",
-    "cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics",
-    # Install dependencies with CC/CXX environment variables set to point vcpkg to gcc-toolset-14
-    # BOTH x64 and ARM64: Use custom triplets with -fPIC for FFmpeg compatibility
-    "cd {project} && CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=x64-linux-pic --overlay-triplets=./vcpkg-triplets",
-    "cd {project} && CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ VCPKG_BUILD_TYPE=release /tmp/vcpkg/vcpkg install --triplet=arm64-linux-pic --overlay-triplets=./vcpkg-triplets",
-    # Debug: show what packages were installed
-    "ls -la {project}/vcpkg_installed/*/lib/pkgconfig/ || true",
-]
-
-
+# Architecture-specific triplet is selected based on AUDITWHEEL_ARCH
+#
+# PLATFORM-SPECIFIC DEPENDENCIES (via vcpkg.json platform expressions):
+# - Linux: Excludes rubberband and ffmpeg (PIC issues with static linking)
+# - Linux: Explicitly includes MP3/Opus codec libraries (mpg123, mp3lame, opus, libogg, libvorbis, libFLAC)
+#          These are transitive dependencies of libsndfile[external-libs] that must be installed
+#          to avoid undefined symbol errors during static linking
+before-all = """
+    yum install -y git zip unzip tar curl make nasm && \
+    git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
+    cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics && \
+    if [ "$AUDITWHEEL_ARCH" = "x86_64" ]; then
+        VCPKG_TRIPLET=x64-linux-pic
+    elif [ "$AUDITWHEEL_ARCH" = "aarch64" ]; then
+        VCPKG_TRIPLET=arm64-linux-pic
+    else
+        echo "ERROR: Unknown architecture: $AUDITWHEEL_ARCH"
+        exit 1
+    fi && \
+    echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_TRIPLET) ===" && \
+    cd {project} && \
+    CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
+    CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \
+    VCPKG_BUILD_TYPE=release \
+    /tmp/vcpkg/vcpkg install --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported && \
+    echo "=== Vcpkg installation complete ===" && \
+    echo "Installed packages in vcpkg_installed/$VCPKG_TRIPLET/:" && \
+    ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
+    echo "Static libraries:" && \
+    ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
+"""
 
 [tool.cibuildwheel.linux.environment]
-# Set paths so Meson can find vcpkg packages based on architecture
-# Note: Both x64-linux-pic and arm64-linux-pic are custom triplets with -fPIC for FFmpeg compatibility
+# Set paths for both architectures - Meson will detect and use the correct one based on host_machine.cpu_family()
+# This works because only one triplet directory will exist (installed in before-all based on AUDITWHEEL_ARCH)
 CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux-pic:{project}/vcpkg_installed/arm64-linux-pic"
 PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/x64-linux-pic/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/share/pkgconfig"
+# Use gcc-toolset-14 for C++17 support (required by rubberband)
 CC = "/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
 CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 

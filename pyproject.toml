@@ -65,6 +65,7 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 # Install only the dependencies for the current architecture (detected via AUDITWHEEL_ARCH)
 # NOTE: rubberband and ffmpeg are skipped on Linux due to PIC issues with static linking
 # (ffmpeg's assembly code causes "relocation R_X86_64_PC32... can not be used when making a shared object")
+# Use --x-manifest-root to prevent vcpkg from entering manifest mode (which would use vcpkg.json)
 before-all = """
     yum install -y git zip unzip tar curl make nasm && \
     git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
@@ -85,7 +86,7 @@ before-all = """
         CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
         CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \
         VCPKG_BUILD_TYPE=release \
-        /tmp/vcpkg/vcpkg install $pkg --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported || \
+        /tmp/vcpkg/vcpkg install $pkg --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --x-manifest-root=/tmp --x-install-root=./vcpkg_installed --allow-unsupported || \
         { echo "ERROR: Failed to install $pkg"; exit 1; }
     done && \
     echo "=== Vcpkg installation complete ===" && \

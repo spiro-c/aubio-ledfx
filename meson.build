@@ -93,8 +93,10 @@ elif host_system == 'darwin'
   endif
 elif host_system == 'linux'
   if host_machine.cpu_family() == 'aarch64'
-    vcpkg_triplet = 'arm64-linux'
+    # Use custom triplet with -fPIC for ARM64 to avoid relocation errors
+    vcpkg_triplet = 'arm64-linux-pic'
   else
+    # Standard x64-linux triplet works fine (no PIC issues on x64)
     vcpkg_triplet = 'x64-linux'
   endif
 endif
@@ -114,11 +116,12 @@ else
   if vcpkg_exe.found()
     message('vcpkg found, installing dependencies from vcpkg.json manifest...')
     
-    # Install vcpkg dependencies
+    # Install vcpkg dependencies with custom triplets for PIC support
     vcpkg_result = run_command(
       vcpkg_exe,
       'install',
       '--triplet=' + vcpkg_triplet,
+      '--overlay-triplets=' + meson.project_source_root() / 'vcpkg-triplets',
       '--x-wait-for-lock',
       '--x-manifest-root=' + meson.project_source_root(),
       '--x-install-root=' + vcpkg_install_root,
@@ -372,9 +375,9 @@ foreach spec : single_feature_specs
 
   has_version = spec.has_key('version')
   if has_version
-    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true, not_found_message: spec['error_message'])
+    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true)
   else
-    dep = dependency(spec['pkg'], required: false, disabler: true, not_found_message: spec['error_message'])
+    dep = dependency(spec['pkg'], required: false, disabler: true)
   endif
 
   if not dep.found() and vcpkg_found and spec.has_key('fallback_libs')
@@ -404,7 +407,7 @@ endforeach
 if not enable_double
   samplerate_opt = get_option('samplerate')
   if not samplerate_opt.disabled()
-    samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: false, disabler: true, not_found_message: 'libsamplerate support was requested but the dependency could not be found')
+    samplerate_dep = dependency('samplerate', version: '>=0.0.15', required: false, disabler: true)
     if not samplerate_dep.found() and vcpkg_found
       samplerate_dep = cc.find_library('samplerate', dirs: vcpkg_library_dirs, required: samplerate_opt.enabled())
     endif
@@ -426,7 +429,7 @@ endif
 # rubberband (C++ library, requires C++ standard library)
 rubberband_opt = get_option('rubberband')
 if not rubberband_opt.disabled()
-  rubberband_dep = dependency('rubberband', version: '>=1.3', required: false, disabler: true, not_found_message: 'rubberband support was requested but the dependency could not be found')
+  rubberband_dep = dependency('rubberband', version: '>=1.3', required: false, disabler: true)
   if not rubberband_dep.found() and vcpkg_found
     rubberband_dep = cc.find_library('rubberband', dirs: vcpkg_library_dirs, required: rubberband_opt.enabled())
   endif
@@ -463,7 +466,7 @@ if not avcodec_opt.disabled()
   libav_deps = []
   libav_missing = false
   foreach spec : libav_specs
-    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true, not_found_message: 'libavcodec support was requested but the dependencies could not be found')
+    dep = dependency(spec['pkg'], version: spec['version'], required: false, disabler: true)
     if not dep.found() and vcpkg_found
       dep = cc.find_library(spec['fallback'], dirs: vcpkg_library_dirs, required: avcodec_opt.enabled())
     endif
@@ -498,7 +501,7 @@ if not vorbis_opt.disabled()
   vorbis_deps = []
   vorbis_missing = false
   foreach spec : vorbis_specs
-    dep = dependency(spec['pkg'], required: false, disabler: true, not_found_message: 'Vorbis support was requested but the dependencies could not be found')
+    dep = dependency(spec['pkg'], required: false, disabler: true)
     if not dep.found() and vcpkg_found
       dep = cc.find_library(spec['fallback'], dirs: vcpkg_library_dirs, required: vorbis_opt.enabled())
     endif

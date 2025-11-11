@@ -58,9 +58,9 @@ meson compile -C builddir
 
 ## Supported Triplets
 
-- **Linux**: `x64-linux`, `arm64-linux`
+- **Linux**: `x64-linux-pic`, `arm64-linux-pic` (custom triplets with -fPIC for static linking)
 - **macOS**: `x64-osx`, `arm64-osx`
-- **Windows**: `x64-windows`, `x86-windows`, `arm64-windows`
+- **Windows**: `x64-windows-release`, `x86-windows-release`, `arm64-windows-release` (release-only builds)
 
 ## Adding Dependencies
 

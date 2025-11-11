@@ -75,15 +75,18 @@ endif
 vcpkg_install_root = meson.project_source_root() / 'vcpkg_installed'
 
 # Determine vcpkg triplet based on host system and architecture
+# Must match the triplet used in CI/CD (see pyproject.toml [tool.cibuildwheel] sections)
 if host_system == 'windows'
+  # Windows: Use x64-windows-release triplet (release-only, dynamic linking)
+  # This matches pyproject.toml [tool.cibuildwheel.windows] before-all step
   if host_machine.cpu_family() == 'x86_64'
-    vcpkg_triplet = 'x64-windows'
+    vcpkg_triplet = 'x64-windows-release'
   elif host_machine.cpu_family() == 'x86'
-    vcpkg_triplet = 'x86-windows'
+    vcpkg_triplet = 'x86-windows-release'
   elif host_machine.cpu_family() == 'aarch64'
-    vcpkg_triplet = 'arm64-windows'
+    vcpkg_triplet = 'arm64-windows-release'
   else
-    vcpkg_triplet = 'x64-windows'
+    vcpkg_triplet = 'x64-windows-release'
   endif
 elif host_system == 'darwin'
   if host_machine.cpu_family() == 'aarch64'
@@ -92,12 +95,12 @@ elif host_system == 'darwin'
     vcpkg_triplet = 'x64-osx'
   endif
 elif host_system == 'linux'
+  # Linux: Use custom triplets with -fPIC for all architectures
+  # This matches pyproject.toml [tool.cibuildwheel.linux] before-all step
   if host_machine.cpu_family() == 'aarch64'
-    # Use custom triplet with -fPIC for ARM64 to avoid relocation errors
     vcpkg_triplet = 'arm64-linux-pic'
   else
-    # Standard x64-linux triplet works fine (no PIC issues on x64)
-    vcpkg_triplet = 'x64-linux'
+    vcpkg_triplet = 'x64-linux-pic'
   endif
 endif
 

@@ -70,6 +70,11 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 # vcpkg enters "manifest mode" when it detects vcpkg.json in the project directory.
 # In manifest mode, individual package arguments are rejected.
 # Solution: Temporarily rename vcpkg.json during installation to force "classic mode"
+#
+# LIBSNDFILE MP3/OPUS SUPPORT:
+# libsndfile's default build includes MP3 (mpg123, mp3lame) and Opus codecs via external-libs feature.
+# These have complex dependency chains that fail on ARM64 and cause linking issues on x86_64.
+# Solution: Install libsndfile[core] only (supports FLAC, OGG/Vorbis built-in, excludes MP3/Opus)
 before-all = """
     yum install -y git zip unzip tar curl make nasm && \
     git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
@@ -85,8 +90,8 @@ before-all = """
     echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_TRIPLET) ===" && \
     cd {project} && \
     mv vcpkg.json vcpkg.json.bak && \
-    echo "Installing core audio dependencies (libsndfile, fftw3, libsamplerate)..." && \
-    for pkg in pkgconf libsndfile fftw3 libsamplerate; do
+    echo "Installing core audio dependencies (libsndfile without MP3/Opus, fftw3, libsamplerate)..." && \
+    for pkg in pkgconf "libsndfile[core]" fftw3 libsamplerate; do
         echo "Installing $pkg..." && \
         CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
         CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \

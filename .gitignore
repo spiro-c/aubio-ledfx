@@ -51,3 +51,9 @@ dist/*.whl
 aubio.egg-info
 .eggs
 .cache
+
+# Meson build artifacts
+builddir/
+builddir_*/
+vcpkg_installed/
+_codeql_detected_source_root

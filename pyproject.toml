@@ -62,19 +62,13 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 [tool.cibuildwheel.linux]
 # Linux: vcpkg dependencies are installed inside the manylinux container
 # Use static libraries for true portability (no external .so dependencies)
-# Install only the dependencies for the current architecture (detected via AUDITWHEEL_ARCH)
-# NOTE: rubberband and ffmpeg are skipped on Linux due to PIC issues with static linking
-# (ffmpeg's assembly code causes "relocation R_X86_64_PC32... can not be used when making a shared object")
+# Architecture-specific triplet is selected based on AUDITWHEEL_ARCH
 #
-# VCPKG MANIFEST MODE WORKAROUND:
-# vcpkg enters "manifest mode" when it detects vcpkg.json in the project directory.
-# In manifest mode, individual package arguments are rejected.
-# Solution: Temporarily rename vcpkg.json during installation to force "classic mode"
-#
-# LIBSNDFILE MP3/OPUS SUPPORT:
-# libsndfile's default build includes MP3 (mpg123, mp3lame) and Opus codecs via external-libs feature.
-# These have complex dependency chains that fail on ARM64 and cause linking issues on x86_64.
-# Solution: Install libsndfile[core] only (supports FLAC, OGG/Vorbis built-in, excludes MP3/Opus)
+# PLATFORM-SPECIFIC DEPENDENCIES (via vcpkg.json platform expressions):
+# - Linux: Excludes rubberband and ffmpeg (PIC issues with static linking)
+# - Linux: Explicitly includes MP3/Opus codec libraries (mpg123, mp3lame, opus, libogg, libvorbis, libFLAC)
+#          These are transitive dependencies of libsndfile[external-libs] that must be installed
+#          to avoid undefined symbol errors during static linking
 before-all = """
     yum install -y git zip unzip tar curl make nasm && \
     git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
@@ -89,17 +83,10 @@ before-all = """
     fi && \
     echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_TRIPLET) ===" && \
     cd {project} && \
-    mv vcpkg.json vcpkg.json.bak && \
-    echo "Installing audio dependencies with full libsndfile support (MP3, Opus, FLAC, OGG/Vorbis)..." && \
-    for pkg in pkgconf libsndfile mpg123 mp3lame opus libogg libvorbis libFLAC fftw3 libsamplerate; do
-        echo "Installing $pkg..." && \
-        CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
-        CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \
-        VCPKG_BUILD_TYPE=release \
-        /tmp/vcpkg/vcpkg install $pkg --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --x-install-root=./vcpkg_installed --allow-unsupported || \
-        { mv vcpkg.json.bak vcpkg.json; echo "ERROR: Failed to install $pkg"; exit 1; }
-    done && \
-    mv vcpkg.json.bak vcpkg.json && \
+    CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
+    CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \
+    VCPKG_BUILD_TYPE=release \
+    /tmp/vcpkg/vcpkg install --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported && \
     echo "=== Vcpkg installation complete ===" && \
     echo "Installed packages in vcpkg_installed/$VCPKG_TRIPLET/:" && \
     ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \

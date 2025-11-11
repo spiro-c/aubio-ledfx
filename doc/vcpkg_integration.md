@@ -60,16 +60,41 @@ meson compile -C builddir
 
 - **Linux**: `x64-linux-pic`, `arm64-linux-pic` (custom triplets with -fPIC for static linking)
 - **macOS**: `x64-osx`, `arm64-osx`
-- **Windows**: `x64-windows-release`, `x86-windows-release`, `arm64-windows-release` (release-only builds)
+- **Windows**: `x64-windows-release` (release-only builds)
+
+## Platform-Specific Dependencies
+
+vcpkg.json uses platform expressions to conditionally install dependencies:
+
+**All platforms:**
+- pkgconf, libsndfile[external-libs], libsamplerate, fftw3
+
+**Linux only:**
+- mpg123, mp3lame, opus, libogg, libvorbis, libFLAC
+- These are transitive dependencies of libsndfile that must be explicitly installed for static linking
+- rubberband and ffmpeg are excluded due to PIC issues with assembly code
+
+**Windows & macOS only:**
+- rubberband (pitch shifting, time stretching)
+- ffmpeg (avcodec, avformat, swresample)
+
+Example platform expression in vcpkg.json:
+```json
+{
+  "name": "rubberband",
+  "platform": "!linux"
+}
+```
 
 ## Adding Dependencies
 
 To add a new dependency:
 
 1. Edit `vcpkg.json` to add the package name
-2. Check vcpkg port exists: `vcpkg search <package>`
-3. Update `meson.build` to use the dependency
-4. Test locally and in CI
+2. Use platform expressions if needed: `"platform": "linux"` or `"platform": "!linux"`
+3. Check vcpkg port exists: `vcpkg search <package>`
+4. Update `meson.build` to use the dependency
+5. Test locally and in CI
 
 ## Troubleshooting
 

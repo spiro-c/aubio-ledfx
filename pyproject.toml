@@ -89,7 +89,8 @@ before-all = """
     /tmp/vcpkg/vcpkg install --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported && \
     echo "=== Vcpkg installation complete ===" && \
     echo "Installed packages in vcpkg_installed/$VCPKG_TRIPLET/:" && \
-    ls -la {project}/vcpkg_installed/ 2>/dev/null || echo "List instaled" && \
+    ls -la {project}/vcpkg_installed/ || echo "List instaled" && \
+    ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/ && \
     ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
     echo "Static libraries:" && \
     ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"

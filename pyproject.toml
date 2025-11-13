@@ -100,6 +100,7 @@ repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
 # This works because only one triplet directory will exist (installed in before-all based on AUDITWHEEL_ARCH)
 CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux-pic:{project}/vcpkg_installed/arm64-linux-pic"
 PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/x64-linux-pic/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/share/pkgconfig"
+LD_LIBRARY_PATH = "${LD_LIBRARY_PATH}:{project}/vcpkg_installed/x64-linux-pic/lib"
 # Use gcc-toolset-14 for C++17 support (required by rubberband)
 CC = "/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
 CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"

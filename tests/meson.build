@@ -134,7 +134,7 @@ foreach test_src : test_sources
     c_args: [
       '-DHAVE_CONFIG_H=1',
       '-DAUBIO_UNSTABLE_API=1',
-      '-DAUBIO_TESTS_SOURCE="' + test_sound_path + '"',
+      '-DAUBIO_TESTS_SOURCE=' + test_sound_path,
     ],
     install: false,
   )

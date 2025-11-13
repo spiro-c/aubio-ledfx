@@ -57,7 +57,7 @@ test-requires = ["pytest", "numpy>=1.26.4"]
 test-command = "python -c \"import aubio; print('aubio version:', aubio.version); print('Portable wheel test: PASS')\" && pytest {project}/python/tests || true"
 
 # Disable build isolation so environment variables (like PKG_CONFIG_PATH) are passed through
-build-frontend = { name = "pip", args = ["--no-build-isolation"] }
+build-frontend = { name = "pip", args = ["--no-build-isolation", "--verbose"] }
 
 [tool.cibuildwheel.linux]
 # Linux: vcpkg dependencies are installed inside the manylinux container
@@ -93,6 +93,7 @@ before-all = """
     echo "Static libraries:" && \
     ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
 """
+repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
 # Set paths for both architectures - Meson will detect and use the correct one based on host_machine.cpu_family()

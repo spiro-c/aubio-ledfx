@@ -70,7 +70,7 @@ build-frontend = { name = "pip", args = ["--no-build-isolation", "--verbose"] }
 #          These are transitive dependencies of libsndfile[external-libs] that must be installed
 #          to avoid undefined symbol errors during static linking
 before-all = """
-    yum install -y git zip unzip tar curl make nasm && \
+    yum install -y git zip unzip tar curl make nasm ffmpeg-devel rubberband-devel && \
     git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
     cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics && \
     if [ "$AUDITWHEEL_ARCH" = "x86_64" ]; then
@@ -88,7 +88,7 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     /tmp/vcpkg/vcpkg install --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported && \
     echo "=== Vcpkg installation complete ===" && \
-    /tmp/vcpkg/vcpkg list
+    /tmp/vcpkg/vcpkg list && \
     echo "Installed packages in vcpkg_installed/$VCPKG_TRIPLET/:" && \
     echo "List of {project}/vcpkg_installed/" && \
     ls -la {project}/vcpkg_installed/ && \

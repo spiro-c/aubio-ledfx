@@ -37,14 +37,12 @@
       "platform": "linux"
     },
     {
-      "name": "rubberband",
-      "platform": "!linux"
+      "name": "rubberband"
     },
     {
       "name": "ffmpeg",
       "default-features": false,
-      "features": ["avcodec", "avformat", "swresample"],
-      "platform": "!linux"
+      "features": ["avcodec", "avformat", "swresample"]
     }
   ]
 }

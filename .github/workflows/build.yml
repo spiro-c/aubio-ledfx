@@ -12,6 +12,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  actions: write  # Required for vcpkg binary caching via GitHub Actions cache
+
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -80,6 +84,18 @@ jobs:
         with:
           submodules: 'recursive'
 
+      # Setup vcpkg binary caching for all platforms
+      # This dramatically reduces build times by caching compiled dependencies
+      - name: Setup vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg/archives
+            ~/AppData/Local/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
       # macOS: Install build tools needed by vcpkg
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
@@ -93,6 +109,7 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.15"
           VCPKG_BUILD_TYPE: "release"
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         run: |
           echo "Building vcpkg dependencies for macOS x86_64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx
@@ -104,6 +121,7 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
           VCPKG_BUILD_TYPE: "release"
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         run: |
           echo "Building vcpkg dependencies for macOS ARM64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx
@@ -118,6 +136,8 @@ jobs:
         env:
           # Build only for the native architecture (no cross-compilation)
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          # Enable vcpkg binary caching in cibuildwheel for Linux
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
           
           # All other configuration is in pyproject.toml
 

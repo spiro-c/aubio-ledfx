@@ -64,6 +64,9 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 # Use static libraries for true portability (no external .so dependencies)
 # Architecture-specific triplet is selected based on AUDITWHEEL_ARCH
 #
+# OPTIMIZATION: vcpkg binary caching dramatically speeds up builds by reusing compiled packages
+# The VCPKG_BINARY_SOURCES environment variable (set in workflow) enables GitHub Actions caching
+#
 # PLATFORM-SPECIFIC DEPENDENCIES (via vcpkg.json platform expressions):
 # - Linux: Excludes rubberband and ffmpeg (PIC issues with static linking)
 # - Linux: Explicitly includes MP3/Opus codec libraries (mpg123, mp3lame, opus, libogg, libvorbis, libFLAC)
@@ -71,8 +74,10 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 #          to avoid undefined symbol errors during static linking
 before-all = """
     yum install -y git zip unzip tar curl make nasm && \
-    git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
-    cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics && \
+    if [ ! -d /tmp/vcpkg ]; then
+        git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
+        cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
+    fi && \
     if [ "$AUDITWHEEL_ARCH" = "x86_64" ]; then
         VCPKG_TRIPLET=x64-linux-pic
     elif [ "$AUDITWHEEL_ARCH" = "aarch64" ]; then

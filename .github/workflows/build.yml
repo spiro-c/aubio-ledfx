@@ -84,6 +84,36 @@ jobs:
         with:
           submodules: 'recursive'
 
+      # Cache vcpkg_installed directory for macOS to avoid rebuilding dependencies
+      # This caches the installed packages directory which is reused across builds
+      - name: Cache vcpkg installed packages (macOS x86_64)
+        if: runner.os == 'macOS' && matrix.arch == 'x86_64'
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_installed
+          key: vcpkg-installed-macos-x64-${{ hashFiles('vcpkg.json', 'vcpkg-triplets/*.cmake') }}
+          restore-keys: |
+            vcpkg-installed-macos-x64-
+
+      - name: Cache vcpkg installed packages (macOS ARM64)
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_installed
+          key: vcpkg-installed-macos-arm64-${{ hashFiles('vcpkg.json', 'vcpkg-triplets/*.cmake') }}
+          restore-keys: |
+            vcpkg-installed-macos-arm64-
+
+      # Cache vcpkg_installed directory for Windows
+      - name: Cache vcpkg installed packages (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_installed
+          key: vcpkg-installed-windows-${{ matrix.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-triplets/*.cmake') }}
+          restore-keys: |
+            vcpkg-installed-windows-${{ matrix.arch }}-
+
       # macOS: Install build tools needed by vcpkg
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
@@ -97,7 +127,6 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.15"
           VCPKG_BUILD_TYPE: "release"
-          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         run: |
           echo "Building vcpkg dependencies for macOS x86_64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=x64-osx
@@ -109,7 +138,6 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
           VCPKG_BUILD_TYPE: "release"
-          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         run: |
           echo "Building vcpkg dependencies for macOS ARM64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx

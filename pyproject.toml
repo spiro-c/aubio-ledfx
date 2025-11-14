@@ -142,8 +142,6 @@ repair-wheel-command = "delvewheel repair --add-path %CD%\\vcpkg_installed\\x64-
 # Set paths so Meson can find vcpkg packages via CMake and pkg-config
 CMAKE_PREFIX_PATH = "{project}\\vcpkg_installed\\x64-windows-release"
 PKG_CONFIG_PATH = "{project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig;{project}\\vcpkg_installed\\x64-windows-release\\share\\pkgconfig"
-# Enable vcpkg binary caching via GitHub Actions cache API
-VCPKG_BINARY_SOURCES = "clear;x-gha,readwrite"
 
 
 

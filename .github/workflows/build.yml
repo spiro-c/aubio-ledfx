@@ -84,14 +84,31 @@ jobs:
         with:
           submodules: 'recursive'
 
-      # Setup vcpkg binary caching for all platforms
-      # This dramatically reduces build times by caching compiled dependencies
-      - name: Setup vcpkg binary cache
+      # Setup vcpkg binary caching - OS-specific paths to avoid validation errors
+      # Each OS uses its own default vcpkg cache location
+      - name: Setup vcpkg binary cache (Linux)
+        if: runner.os == 'Linux'
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/vcpkg/archives
-            ~/AppData/Local/vcpkg/archives
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
+      - name: Setup vcpkg binary cache (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/vcpkg/archives
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
+      - name: Setup vcpkg binary cache (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/vcpkg/archives
           key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-

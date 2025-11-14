@@ -3,8 +3,36 @@ name: Security - Sanitizer Tests
 on:
   push:
     branches: [ main, develop, 'copilot/**' ]
+    paths:
+      - 'src/**/*.c'
+      - 'src/**/*.h'
+      - 'python/ext/**/*.c'
+      - 'python/ext/**/*.h'
+      - 'examples/**/*.c'
+      - 'examples/**/*.h'
+      - 'tests/**/*.c'
+      - 'tests/**/*.h'
+      - 'meson.build'
+      - 'src/meson.build'
+      - 'python/meson.build'
+      - 'meson_options.txt'
+      - '.github/workflows/sanitizers.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'src/**/*.c'
+      - 'src/**/*.h'
+      - 'python/ext/**/*.c'
+      - 'python/ext/**/*.h'
+      - 'examples/**/*.c'
+      - 'examples/**/*.h'
+      - 'tests/**/*.c'
+      - 'tests/**/*.h'
+      - 'meson.build'
+      - 'src/meson.build'
+      - 'python/meson.build'
+      - 'meson_options.txt'
+      - '.github/workflows/sanitizers.yml'
   workflow_dispatch:
 
 permissions:

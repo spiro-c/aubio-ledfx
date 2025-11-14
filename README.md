@@ -212,3 +212,7 @@ Contributing
 
 Patches are welcome: please fork the latest git repository and create a feature
 branch. Submitted requests should pass all continuous integration tests.
+
+For optimization and modernization priorities, see:
+- [**OPTIMIZATION_SUMMARY.md**](OPTIMIZATION_SUMMARY.md) - Quick reference guide
+- [**OPTIMIZATION_ROADMAP.md**](OPTIMIZATION_ROADMAP.md) - Detailed implementation roadmap

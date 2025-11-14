@@ -125,3 +125,9 @@ option('python',
   value: true,
   description: 'Build Python bindings'
 )
+
+option('security_hardening',
+  type: 'boolean',
+  value: true,
+  description: 'Enable security hardening compiler flags (-fstack-protector-strong, -D_FORTIFY_SOURCE=2, etc.)'
+)

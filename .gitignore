@@ -58,3 +58,4 @@ builddir_*/
 vcpkg_installed/
 _codeql_detected_source_root
 .vscode/settings.json
+tmp_aubio_*

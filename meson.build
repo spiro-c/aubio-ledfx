@@ -69,6 +69,58 @@ if host_system != 'windows'
   add_project_arguments('-D_POSIX_C_SOURCE=200112L', language: 'c')
 endif
 
+# Security hardening compiler flags
+# These flags add runtime protections and compile-time checks
+# Can be disabled with -Dsecurity_hardening=false if needed for compatibility
+if get_option('security_hardening')
+  security_flags = []
+
+  # Stack protection - prevents stack buffer overflows
+  if cc.has_argument('-fstack-protector-strong')
+    security_flags += ['-fstack-protector-strong']
+  elif cc.has_argument('-fstack-protector')
+    security_flags += ['-fstack-protector']
+  endif
+
+  # Fortify source - adds buffer overflow checks for standard library functions
+  # Only works in optimized builds (-O1 or higher)
+  if get_option('buildtype') != 'plain' and get_option('buildtype') != 'debug'
+    if cc.has_argument('-D_FORTIFY_SOURCE=2')
+      security_flags += ['-D_FORTIFY_SOURCE=2']
+    endif
+  endif
+
+  # Format string security - warns about potentially insecure format strings
+  if cc.has_argument('-Wformat')
+    security_flags += ['-Wformat']
+  endif
+  if cc.has_argument('-Wformat-security')
+    security_flags += ['-Wformat-security']
+  endif
+
+  # Treat implicit function declarations as errors (security issue)
+  if cc.has_argument('-Werror=implicit-function-declaration')
+    security_flags += ['-Werror=implicit-function-declaration']
+  endif
+
+  # Additional hardening warnings
+  if cc.has_argument('-Warray-bounds')
+    security_flags += ['-Warray-bounds']
+  endif
+
+  if security_flags.length() > 0
+    add_project_arguments(security_flags, language: 'c')
+    message('Security hardening flags enabled: ' + ' '.join(security_flags))
+  endif
+else
+  message('Security hardening disabled')
+endif
+
+# Position-independent code for shared libraries (security best practice)
+# PIE (Position Independent Executable) is handled separately for executables via b_pie option
+# Note: -fPIC is automatically handled by meson for shared libraries
+# We don't add -pie here as it will be applied at link time for executables only
+
 # vcpkg integration for cross-platform dependency management
 # Note: In CI/CD, vcpkg dependencies are pre-installed by cibuildwheel before-all step
 # Check if dependencies are already installed before running vcpkg

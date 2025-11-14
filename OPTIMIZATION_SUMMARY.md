@@ -9,54 +9,59 @@
 
 | Priority | Focus Area | Impact | Effort | ROI |
 |----------|-----------|--------|--------|-----|
-| **1** | CI/CD Build Performance | 60% faster builds | 3-5 days | 🔥 CRITICAL |
+| **1** | CI/CD Build Performance | Incremental improvements | 2-4 days | ✓ MEDIUM |
 | **2** | Python Code Generation | Type safety, maintainability | 4-6 days | ⭐ HIGH |
 | **3** | Test Infrastructure | Reliability, security | 5-7 days | ⭐ HIGH |
 | **4** | Code Quality & Analysis | Proactive bug prevention | 3-4 days | ✓ MEDIUM |
 | **5** | Documentation & DX | Contributor onboarding | 3-5 days | ✓ MEDIUM |
 
-**Total Estimated Effort:** 18-27 days (spread over 3 months)
+**Total Estimated Effort:** 17-26 days (spread over 3 months)
+
+**Note:** CI/CD is already well-optimized with caching. Priority adjusted to reflect current state.
 
 ---
 
 ## 📊 Key Metrics & Targets
 
 ### Current State
-- CI build time: **90-120 minutes** per PR
+- CI build time: **70-90 minutes** per PR (with caching on macOS/Windows)
 - Test enforcement: **None** (tests run with `|| true`)
 - Code coverage: **Unknown**
 - Type hints: **None**
 - Contributor onboarding: **2-3 days**
 
 ### Target State (3 months)
-- CI build time: **35-50 minutes** (60% reduction) ✅
+- CI build time: **50-65 minutes** (20-25% improvement) ✅
 - Test enforcement: **100%** (required check) ✅
 - Code coverage: **>80%** with tracking ✅
 - Type hints: **Full .pyi stubs** or **pybind11** ✅
 - Contributor onboarding: **<4 hours** ✅
 
+**Note:** CI already has effective caching for macOS/Windows. Linux builds in Docker remain the main opportunity for optimization.
+
 ---
 
-## 🚀 Priority 1: CI/CD Build Performance (CRITICAL)
+## 🚀 Priority 1: CI/CD Build Performance (MEDIUM)
 
-**Problem:** vcpkg rebuilds dependencies from source on every CI run  
-**Solution:** Binary caching + ccache + dependency pre-building  
-**Impact:** 60% faster CI (90-120 min → 35-50 min)
+**Current State:** Already well-optimized with caching for macOS/Windows  
+**Remaining Opportunity:** Linux Docker builds, compiler caching  
+**Impact:** 20-25% improvement (70-90 min → 50-65 min)
 
-### Quick Wins
-- ✅ Enable vcpkg binary caching with GitHub Actions cache
-- ✅ Add ccache/sccache for C compilation
-- ✅ Implement path filters to skip unnecessary builds
+### Already Implemented ✅
+- ✅ vcpkg `actions/cache@v4` for macOS and Windows
+- ✅ Smart cache keys based on `vcpkg.json` and triplet files
+- ✅ `before-all` runs once per job (not per Python version)
 
-### Key Strategies
-1. **vcpkg binary caching** - Cache compiled dependencies across runs
-2. **Compiler caching** - Use sccache/ccache for C/C++ compilation
-3. **Dependency pre-building** - Separate job for dependency compilation
-4. **Workflow optimization** - Reduce duplication, better parallelization
+### Remaining Opportunities
+1. **Linux Docker optimization** - Explore BuildKit caching or pre-built images
+2. **Compiler caching** - Add ccache/sccache for C/C++ compilation
+3. **Workflow organization** - Path filters, extract reusable workflows
 
-**Expected Savings:**
-- vcpkg dependency build: 40-50 min → 5-10 min (90% cache hit)
-- C library compilation: 20 min → 10 min (50% cache hit)
+**Expected Improvements:**
+- Linux vcpkg: 8-12 min → 4-6 min (with Docker caching)
+- C compilation: 15-25% faster (with ccache on cache hit)
+
+**Important Note:** The deprecated `x-gha` vcpkg binary source provider (removed June 2024) has been replaced by direct `actions/cache` usage, which is already implemented.
 
 ---
 
@@ -252,17 +257,25 @@
 5. Reference roadmap sections in PR descriptions
 
 ### Quick Start: Priority 1 (CI/CD)
-The highest ROI item is CI/CD optimization. To get started:
+To analyze current CI/CD performance:
 
 ```bash
-# 1. Test vcpkg binary caching locally
-export VCPKG_BINARY_SOURCES="clear;x-gha,readwrite"
-vcpkg install --triplet=x64-linux-pic
+# 1. Check cache sizes for existing caching
+du -sh vcpkg_installed/x64-osx/
+du -sh vcpkg_installed/arm64-osx/
+du -sh vcpkg_installed/x64-windows-release/
 
-# 2. Measure dependency build time
-time vcpkg install --triplet=x64-linux-pic
+# 2. Review CI logs for cache hit rates
+# Look for "Cache restored from key:" in GitHub Actions logs
 
-# 3. Test with cache
+# 3. Measure actual build times
+# Compare runs with warm cache vs cold cache
+
+# 4. If pursuing Linux optimization, test Docker BuildKit caching
+# (See OPTIMIZATION_ROADMAP.md for detailed instructions)
+```
+
+**Note:** The current implementation already uses `actions/cache@v4` for vcpkg dependencies on macOS and Windows. The old `x-gha` binary source (deprecated June 2024) is no longer recommended.
 time vcpkg install --triplet=x64-linux-pic  # Should be much faster
 ```
 

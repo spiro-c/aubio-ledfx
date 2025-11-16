@@ -27,8 +27,15 @@ fvec_t * new_fvec(uint_t length) {
     return NULL;
   }
   s = AUBIO_NEW(fvec_t);
+  if (!s) {
+    return NULL;
+  }
   s->length = length;
   s->data = AUBIO_ARRAY(smpl_t, s->length);
+  if (!s->data) {
+    AUBIO_FREE(s);
+    return NULL;
+  }
   return s;
 }
 

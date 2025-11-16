@@ -28,11 +28,28 @@ fmat_t * new_fmat (uint_t height, uint_t length) {
     return NULL;
   }
   s = AUBIO_NEW(fmat_t);
+  if (!s) {
+    return NULL;
+  }
   s->height = height;
   s->length = length;
   s->data = AUBIO_ARRAY(smpl_t*,s->height);
+  if (!s->data) {
+    AUBIO_FREE(s);
+    return NULL;
+  }
   for (i=0; i< s->height; i++) {
     s->data[i] = AUBIO_ARRAY(smpl_t, s->length);
+    if (!s->data[i]) {
+      /* cleanup previously allocated rows */
+      while (i > 0) {
+        i--;
+        AUBIO_FREE(s->data[i]);
+      }
+      AUBIO_FREE(s->data);
+      AUBIO_FREE(s);
+      return NULL;
+    }
     for (j=0; j< s->length; j++) {
       s->data[i][j]=0.;
     }

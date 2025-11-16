@@ -138,10 +138,19 @@ new_aubio_filter (uint_t order)
     AUBIO_FREE(f);
     return NULL;
   }
+  /* check if main structure allocation succeeded */
+  if (!f) {
+    return NULL;
+  }
+  /* allocate filter buffers and check each allocation */
   f->x = new_lvec (order);
+  if (!f->x) goto beach;
   f->y = new_lvec (order);
+  if (!f->y) goto beach;
   f->a = new_lvec (order);
+  if (!f->a) goto beach;
   f->b = new_lvec (order);
+  if (!f->b) goto beach;
   /* by default, samplerate is not set */
   f->samplerate = 0;
   f->order = order;
@@ -149,6 +158,15 @@ new_aubio_filter (uint_t order)
   f->a->data[0] = 1.;
   f->b->data[0] = 1.;
   return f;
+  
+beach:
+  /* cleanup on allocation failure */
+  if (f->a) del_lvec(f->a);
+  if (f->b) del_lvec(f->b);
+  if (f->x) del_lvec(f->x);
+  if (f->y) del_lvec(f->y);
+  AUBIO_FREE(f);
+  return NULL;
 }
 
 void

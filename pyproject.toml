@@ -97,7 +97,7 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=vcpkg-triplets \
     --feature-flags="versions,manifests" \
-    --triplet=$VCPKG_TRIPLET \
+    --triplet=$VCPKG_DEFAULT_TRIPLET \
     --x-manifest-root=. \
     --x-install-root=/opt/vcpkg/installed && \
     echo "=== List vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
@@ -157,7 +157,7 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=vcpkg-triplets \
     --feature-flags="versions,manifests" \
-    --triplet=$VCPKG_TRIPLET \
+    --triplet=$VCPKG_DEFAULT_TRIPLET \
     --x-manifest-root=. \
     --x-install-root=/opt/vcpkg/installed && \
     echo "=== List vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \

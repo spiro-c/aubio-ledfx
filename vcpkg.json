@@ -1,21 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "aubio-ledfx",
-  "version-string": "0.4.11",
+  "version-string": "0.5.0-alpha",
   "description": "aubio is a library for audio and music analysis, synthesis, and effects",
   "dependencies": [
     "pkgconf",
     {
       "name": "libsndfile",
       "default-features": false,
-      "features": ["external-libs"]
+      "features": [
+        "external-libs"
+      ]
     },
     "libsamplerate",
     "fftw3",
-    {
-      "name": "mpg123",
-      "platform": "linux"
-    },
     {
       "name": "mp3lame",
       "platform": "linux"
@@ -37,14 +35,16 @@
       "platform": "linux"
     },
     {
-      "name": "rubberband",
-      "platform": "!linux"
+      "name": "rubberband"
     },
     {
       "name": "ffmpeg",
       "default-features": false,
-      "features": ["avcodec", "avformat", "swresample"],
-      "platform": "!linux"
+      "features": [
+        "avcodec",
+        "avformat",
+        "swresample"
+      ]
     }
   ]
 }

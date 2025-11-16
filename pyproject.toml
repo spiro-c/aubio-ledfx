@@ -78,40 +78,88 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 #          to avoid undefined symbol errors during static linking
 before-all = """
     yum install -y git zip unzip tar curl make nasm && \
-    if [ ! -d /tmp/vcpkg ]; then
-        git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
-        cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
+    if [ ! -d /opt/vcpkg ]; then
+        git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg && \
+        echo "=== Checkout current version of vcpkg to ensure consistent builds: ===" && \
+        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170 && \
     fi && \
-    if [ "$AUDITWHEEL_ARCH" = "x86_64" ]; then
-        VCPKG_TRIPLET=x64-linux-pic
-    elif [ "$AUDITWHEEL_ARCH" = "aarch64" ]; then
-        VCPKG_TRIPLET=arm64-linux-pic
-    else
-        echo "ERROR: Unknown architecture: $AUDITWHEEL_ARCH"
-        exit 1
-    fi && \
-    echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_TRIPLET) ===" && \
-    cd {project} && \
-    CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc \
-    CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++ \
+    echo "=== Bootstrapping vcpkg ===" && \
+    VCPKG_INSTALLATION_ROOT="/opt/vcpkg" && \
+    PATH="${PATH}:/opt/vcpkg" && \
+    VCPKG_DEFAULT_TRIPLET="x64-linux-pic" && \
+    bootstrap-vcpkg.sh -disableMetrics && \
+    mkdir -p /root/.vcpkg/ $HOME/.vcpkg && \
+    touch /root/.vcpkg/vcpkg.path.txt $HOME/.vcpkg/vcpkg.path.txt && \
+    vcpkg integrate install && \
+    vcpkg integrate bash && \
+    echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     VCPKG_BUILD_TYPE=release \
-    /tmp/vcpkg/vcpkg install --triplet=$VCPKG_TRIPLET --overlay-triplets=./vcpkg-triplets --allow-unsupported && \
+    vcpkg install --overlay-triplets=./custom-triplets \
+    --feature-flags="versions,manifests" \
+    --x-manifest-root=/opt/vcpkg \
+    --x-install-root=/opt/vcpkg/installed  \
+    --clean-after-build && \
+    vcpkg list && \
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/x64-linux-pic/lib:/opt/vcpkg/installed/x64-linux/lib" && \
+    rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/downloads && \
     echo "=== Vcpkg installation complete ===" && \
-    echo "Installed packages in vcpkg_installed/$VCPKG_TRIPLET/:" && \
-    ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
+    echo "Installed packages in $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/:" && \
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
     echo "Static libraries:" && \
-    ls -la {project}/vcpkg_installed/$VCPKG_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
 """
 
 [tool.cibuildwheel.linux.environment]
 # Set paths for both architectures - Meson will detect and use the correct one based on host_machine.cpu_family()
 # This works because only one triplet directory will exist (installed in before-all based on AUDITWHEEL_ARCH)
-CMAKE_PREFIX_PATH = "{project}/vcpkg_installed/x64-linux-pic:{project}/vcpkg_installed/arm64-linux-pic"
-PKG_CONFIG_PATH = "{project}/vcpkg_installed/x64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/x64-linux-pic/share/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/lib/pkgconfig:{project}/vcpkg_installed/arm64-linux-pic/share/pkgconfig"
-# Use gcc-toolset-14 for C++17 support (required by rubberband)
-CC = "/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
-CXX = "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
+VCPKG_INSTALL = "$VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET"
+PKG_CONFIG_PATH = "$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALL/share/pkgconfig:$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/x64-linux/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/x64-linux/share/pkgconfig"
 
+[[tool.cibuildwheel.overrides]]
+select = "*-manylinux_aarch64*"
+# Linux: vcpkg dependencies are installed inside the manylinux container
+# Use static libraries for true portability (no external .so dependencies)
+# Architecture-specific triplet is selected based on AUDITWHEEL_ARCH
+#
+# PLATFORM-SPECIFIC DEPENDENCIES (via vcpkg.json platform expressions):
+# - Linux: Excludes rubberband and ffmpeg (PIC issues with static linking)
+# - Linux: Explicitly includes MP3/Opus codec libraries (mpg123, mp3lame, opus, libogg, libvorbis, libFLAC)
+#          These are transitive dependencies of libsndfile[external-libs] that must be installed
+#          to avoid undefined symbol errors during static linking
+before-all = """
+    yum install -y git zip unzip tar curl make nasm && \
+    if [ ! -d /opt/vcpkg ]; then
+        git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg && \
+        echo "=== Checkout current version of vcpkg to ensure consistent builds: ===" && \
+        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170 && \
+    fi && \
+    echo "=== Bootstrapping vcpkg ===" && \
+    VCPKG_INSTALLATION_ROOT="/opt/vcpkg" && \
+    PATH="${PATH}:/opt/vcpkg" && \
+    VCPKG_DEFAULT_TRIPLET="arm64-linux-pic" && \
+    VCPKG_DEFAULT_HOST_TRIPLET="arm64-linux-release" && \
+    bootstrap-vcpkg.sh -disableMetrics && \
+    mkdir -p /root/.vcpkg/ $HOME/.vcpkg && \
+    touch /root/.vcpkg/vcpkg.path.txt $HOME/.vcpkg/vcpkg.path.txt && \
+    vcpkg integrate install && \
+    vcpkg integrate bash && \
+    echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
+    VCPKG_BUILD_TYPE=release \
+    vcpkg install --overlay-triplets=./custom-triplets \
+    --feature-flags="versions,manifests" \
+    --x-manifest-root=/opt/vcpkg \
+    --x-install-root=/opt/vcpkg/installed  \
+    --clean-after-build && \
+    vcpkg list && \
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/arm64-linux-pic/lib:/opt/vcpkg/installed/arm64-linux-release/lib" && \
+    rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/downloads && \
+    echo "=== Vcpkg installation complete ===" && \
+    echo "Installed packages in $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/:" && \
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
+    echo "Static libraries:" && \
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
+"""
+environment = {PKG_CONFIG_PATH = "$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALL/share/pkgconfig:$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-pic/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-release/share/pkgconfig"}
 
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building

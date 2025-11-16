@@ -96,7 +96,6 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=./custom-triplets \
     --feature-flags="versions,manifests" \
-    --x-manifest-root=/opt/vcpkg \
     --x-install-root=/opt/vcpkg/installed  \
     --clean-after-build && \
     vcpkg list && \
@@ -147,7 +146,6 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=./custom-triplets \
     --feature-flags="versions,manifests" \
-    --x-manifest-root=/opt/vcpkg \
     --x-install-root=/opt/vcpkg/installed  \
     --clean-after-build && \
     vcpkg list && \

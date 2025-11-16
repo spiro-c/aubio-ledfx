@@ -81,7 +81,7 @@ before-all = """
     if [ ! -d /opt/vcpkg ]; then
         git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg && \
         echo "=== Checkout current version of vcpkg to ensure consistent builds: ===" && \
-        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170 && \
+        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170
     fi && \
     echo "=== Bootstrapping vcpkg ===" && \
     VCPKG_INSTALLATION_ROOT="/opt/vcpkg" && \
@@ -131,7 +131,7 @@ before-all = """
     if [ ! -d /opt/vcpkg ]; then
         git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg && \
         echo "=== Checkout current version of vcpkg to ensure consistent builds: ===" && \
-        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170 && \
+        git -C /opt/vcpkg checkout 0804e3b55b7e435c593707071052363fa876f170
     fi && \
     echo "=== Bootstrapping vcpkg ===" && \
     VCPKG_INSTALLATION_ROOT="/opt/vcpkg" && \

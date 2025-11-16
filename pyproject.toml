@@ -125,7 +125,8 @@ before-all = """
 # Set paths for both architectures - Meson will detect and use the correct one based on host_machine.cpu_family()
 # This works because only one triplet directory will exist (installed in before-all based on AUDITWHEEL_ARCH)
 VCPKG_INSTALL = "$VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET"
-PKG_CONFIG_PATH = "$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALL/share/pkgconfig:$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/x64-linux/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/x64-linux/share/pkgconfig"
+PKG_CONFIG_PATH = "/opt/vcpkg/installed/x64-linux-pic/lib/pkgconfig:/opt/vcpkg/installed/x64-linux-pic/share/pkgconfig:/opt/vcpkg/installed/x64-linux/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/x64-linux/share/pkgconfig"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/x64-linux-pic/lib:/opt/vcpkg/installed/x64-linux/lib"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-manylinux_aarch64*"
@@ -182,7 +183,7 @@ before-all = """
     echo "Static libraries:" && \
     ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
 """
-environment = {PKG_CONFIG_PATH = "$VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/share/pkgconfig:$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-pic/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-release/share/pkgconfig"}
+environment = {PKG_CONFIG_PATH = "/opt/vcpkg/installed/arm64-linux-pic/lib/pkgconfig:/opt/vcpkg/installed/arm64-linux-pic/share/pkgconfig:/opt/vcpkg/installed/arm64-linux/lib/pkgconfig:/opt/vcpkg/installed/arm64-linux/share/pkgconfig", LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/arm64-linux-pic/lib:/opt/vcpkg/installed/arm64-linux/lib"}
 
 [tool.cibuildwheel.windows]
 # Windows: Use vcpkg to install dependencies before building

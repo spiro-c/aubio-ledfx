@@ -134,10 +134,19 @@ aubio_filter_t *
 new_aubio_filter (uint_t order)
 {
   aubio_filter_t *f = AUBIO_NEW (aubio_filter_t);
+  
+  /* validate order parameter to prevent unrealistic allocations */
   if ((sint_t)order < 1) {
     AUBIO_FREE(f);
     return NULL;
   }
+  /* typical values are 3, 5, or 7; allow up to 512 as reasonable upper bound */
+  if (order > 512) {
+    AUBIO_ERR("filter: order %d is unrealistic (max 512), aborting\n", order);
+    AUBIO_FREE(f);
+    return NULL;
+  }
+  
   /* check if main structure allocation succeeded */
   if (!f) {
     return NULL;

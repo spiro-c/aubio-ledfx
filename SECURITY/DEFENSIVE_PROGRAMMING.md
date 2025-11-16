@@ -1,5 +1,38 @@
 # Defensive Programming in aubio-ledfx
 
+> **Document Type**: Developer Guide (REQUIRED READING)  
+> **Last Updated**: 2025-11-16  
+> **Audience**: All C developers  
+> **Purpose**: Memory safety and defensive coding patterns
+
+## Quick Reference Card
+
+```c
+// Template for all new C functions
+void my_function(fvec_t *vec, uint_t index, smpl_t value) {
+  // 1. Validate inputs
+  AUBIO_ASSERT_NOT_NULL(vec);
+  AUBIO_ASSERT_BOUNDS(index, vec->length);
+  AUBIO_ASSERT_RANGE(value, 0.0, 1.0);
+  
+  // 2. Proceed safely
+  vec->data[index] = value;
+}
+```
+
+---
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Security Assertion Macros](#security-assertion-macros)
+3. [Input Validation Patterns](#input-validation-patterns)
+4. [Common Code Patterns](#common-patterns-in-aubio-ledfx)
+5. [Build Configuration](#build-configuration)
+6. [Testing](#testing-assertions)
+7. [Best Practices](#best-practices)
+
+---
+
 This document describes the defensive programming patterns and security assertions implemented in aubio-ledfx to prevent common programming errors and security vulnerabilities.
 
 ## Overview
@@ -418,7 +451,7 @@ void aubio_process(aubio_obj_t *o, fvec_t *in, fvec_t *out) {
 
 Defensive programming works best when combined with:
 
-1. **Compiler Security Flags** (see `SECURITY_HARDENING.md`)
+1. **Compiler Security Flags** (see `HARDENING.md`)
    - Stack protection
    - Fortify source
    - Format security

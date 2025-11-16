@@ -1,5 +1,34 @@
 # Security Hardening in aubio-ledfx
 
+> **Document Type**: Build Configuration Guide  
+> **Last Updated**: 2025-11-16  
+> **Audience**: Build Engineers, DevOps, Developers  
+> **Purpose**: Compiler security flags and build hardening
+
+## Quick Start
+
+```bash
+# Recommended secure build
+meson setup builddir -Dsecurity_hardening=true -Db_pie=true -Dtests=true
+meson compile -C builddir
+meson test -C builddir
+```
+
+**Performance Impact**: < 3% overhead  
+**Security Benefit**: Multiple layers of runtime protection
+
+---
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Enabled Security Features](#enabled-security-features)
+3. [Build Configuration](#build-configuration)
+4. [Performance Impact](#performance-impact)
+5. [Testing Security Features](#testing-security-features)
+6. [Platform-Specific Notes](#limitations-and-considerations)
+
+---
+
 This document describes the security hardening measures implemented in the aubio-ledfx build system.
 
 ## Overview
@@ -243,7 +272,7 @@ Security hardening is automatically enabled in the GitHub Actions workflows. To 
 
 Beyond compiler flags, aubio-ledfx implements:
 
-1. **Explicit Bounds Checking:** All array accesses are validated (see `SECURITY_REVIEW.md`)
+1. **Explicit Bounds Checking:** All array accesses are validated (see `REVIEW.md`)
 
 2. **Safe String Handling:** No use of unsafe functions like `strcpy`, `sprintf`, `gets`
 

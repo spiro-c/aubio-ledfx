@@ -1,5 +1,41 @@
 # Memory Safety Testing with Sanitizers
 
+> **Document Type**: Testing Guide (REQUIRED FOR ALL C CODE)  
+> **Last Updated**: 2025-11-16  
+> **Audience**: All Developers, CI/CD Engineers  
+> **Purpose**: Runtime memory safety validation
+
+## Quick Start (Required Before Commit)
+
+```bash
+# Build with sanitizers
+meson setup builddir -Db_sanitize=address,undefined -Dtests=true
+meson compile -C builddir
+
+# Run ALL tests
+meson test -C builddir --print-errorlogs
+
+# ✅ Must show: All tests passed, zero sanitizer errors
+```
+
+**Commit Rule**: All C code changes MUST pass sanitizer tests before merging.
+
+---
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Quick Start](#quick-start)
+3. [Detailed Usage](#detailed-usage)
+   - [AddressSanitizer (ASAN)](#addresssanitizer-asan)
+   - [UndefinedBehaviorSanitizer (UBSAN)](#undefinedbehaviorsanitizer-ubsan)
+   - [MemorySanitizer (MSAN)](#memorysanitizer-msan)
+   - [ThreadSanitizer (TSAN)](#threadsanitizer-tsan)
+4. [CI/CD Integration](#cicd-integration)
+5. [Interpreting Results](#interpreting-results)
+6. [Troubleshooting](#troubleshooting)
+
+---
+
 This document describes how to use sanitizers to detect memory safety issues in aubio-ledfx.
 
 ## Overview

@@ -149,7 +149,7 @@ beach:  // ✅ NEW: Cleanup handler
 
 ## Documentation Updates
 
-✅ Updated `SECURITY_REVIEW.md` with:
+✅ Updated `SECURITY/REVIEW.md` with:
 - Comprehensive vulnerability analysis
 - Attack vectors and exploitation scenarios
 - Detailed fix implementation

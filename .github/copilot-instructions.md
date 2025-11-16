@@ -201,6 +201,113 @@ See `doc/meson_reference.rst` for comprehensive command reference.
 3. **New dependencies**: Update `dependencies` list in `meson.build`
 4. **Config defines**: Use `conf_data.set()` in `meson.build`, access via `config.h`
 
+### Memory Safety Requirements (CRITICAL)
+
+**All C code MUST follow defensive programming patterns**. See `/SECURITY/` directory for comprehensive guidelines.
+
+#### Required for All C Functions
+
+```c
+void example_function(fvec_t *vec, uint_t index) {
+  // 1. Validate inputs with assertions
+  AUBIO_ASSERT_NOT_NULL(vec);
+  AUBIO_ASSERT_BOUNDS(index, vec->length);
+  
+  // 2. Proceed safely
+  vec->data[index] = 0.0;
+}
+```
+
+#### When to Consult Security Documentation
+
+**REQUIRED before writing C code**:
+- **`SECURITY/DEFENSIVE_PROGRAMMING.md`** - Memory safety patterns, assertion macros
+  - Use for: All new C functions, array operations, pointer handling
+  - Contains: AUBIO_ASSERT_* macros, input validation patterns, safe loop bounds
+
+**REQUIRED before committing C code**:
+- **`SECURITY/SANITIZERS.md`** - Testing with ASAN/UBSAN
+  - Use for: Running tests before commits
+  - Command: `meson setup builddir -Db_sanitize=address,undefined -Dtests=true`
+  - All C changes must pass sanitizer tests with zero errors
+
+**When reviewing similar code**:
+- **`SECURITY/REVIEW.md`** - Historical vulnerability fixes
+  - Use for: Understanding past security issues, checking similar patterns
+  - Contains: 5 fixed vulnerabilities, safe coding patterns, what NOT to do
+
+**When configuring builds**:
+- **`SECURITY/HARDENING.md`** - Compiler security flags
+  - Use for: Build setup, CI/CD configuration
+  - Contains: Stack protection, fortify source, PIE settings
+
+**Overview and status**:
+- **`SECURITY/README.md`** - Quick reference and navigation
+- **`SECURITY/STRENGTHENING_SUMMARY.md`** - Current security metrics
+
+#### Critical Memory Safety Patterns
+
+**Vector operations** (fvec, cvec, fmat, lvec):
+```c
+// Always validate before accessing
+AUBIO_ASSERT_BOUNDS(i, vec->length);
+vec->data[i] = value;
+```
+
+**Object constructors**:
+```c
+// Check all allocations, use goto beach for cleanup
+aubio_obj_t *obj = AUBIO_NEW(aubio_obj_t);
+if (!obj) return NULL;
+
+obj->buffer = new_fvec(size);
+if (!obj->buffer) goto beach;
+// ... more allocations
+
+return obj;
+
+beach:
+  if (obj->buffer) del_fvec(obj->buffer);
+  AUBIO_FREE(obj);
+  return NULL;
+```
+
+**Array indexing with lookahead**:
+```c
+// When accessing data[i+1], loop must stop at length-1
+for (i = 0; i < length - 1; i++) {
+  AUBIO_ASSERT_BOUNDS(i + 1, length);
+  result[i] = (data[i] + data[i + 1]) / 2.0;
+}
+```
+
+**String handling**:
+```c
+// Allocate size+1, use strncpy, explicit null termination
+size_t len = strnlen(src, PATH_MAX);
+dest = AUBIO_ARRAY(char_t, len + 1);  // +1 for null!
+strncpy(dest, src, len);
+dest[len] = '\0';  // Explicit termination
+```
+
+#### Prohibited Patterns
+
+❌ **Never use**: `strcpy`, `sprintf`, `gets`, `strcat`  
+❌ **Never**: Access arrays without bounds checking  
+❌ **Never**: Dereference pointers without NULL checks  
+❌ **Never**: Allocate `strnlen(...)` bytes - always add +1 for null terminator
+
+#### Testing Checklist
+
+Before committing C code:
+- [ ] Added AUBIO_ASSERT_* macros to all functions
+- [ ] Built with: `meson setup builddir -Db_sanitize=address,undefined`
+- [ ] All tests pass: `meson test -C builddir`
+- [ ] Zero sanitizer errors in output
+- [ ] Reviewed similar patterns in `SECURITY/REVIEW.md`
+
+See `/SECURITY/README.md` for comprehensive security documentation overview.
+
 ## When Editing CI
 
 - **vcpkg versions**: Pinned in `vcpkg.json` (no version= means latest)

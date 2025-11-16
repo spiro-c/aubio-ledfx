@@ -235,8 +235,8 @@
 - **[OPTIMIZATION_ROADMAP.md](OPTIMIZATION_ROADMAP.md)** - Complete detailed roadmap (47KB, 1700+ lines)
 - **[FUTURE_ACTIONS.md](FUTURE_ACTIONS.md)** - Security and code quality improvements
 - **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Security strengthening plan
-- **[SECURITY_REVIEW.md](SECURITY_REVIEW.md)** - Comprehensive security audit
-- **[DEFENSIVE_PROGRAMMING.md](DEFENSIVE_PROGRAMMING.md)** - Security assertion patterns
+- **[SECURITY/REVIEW.md](SECURITY/REVIEW.md)** - Comprehensive security audit
+- **[SECURITY/DEFENSIVE_PROGRAMMING.md](SECURITY/DEFENSIVE_PROGRAMMING.md)** - Security assertion patterns
 
 ---
 

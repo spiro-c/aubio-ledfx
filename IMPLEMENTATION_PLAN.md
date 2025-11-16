@@ -2,7 +2,7 @@
 
 **Project:** aubio-ledfx  
 **Created:** 2025-11-14  
-**Based on:** SECURITY_REVIEW.md and FUTURE_ACTIONS.md  
+**Based on:** SECURITY/REVIEW.md and FUTURE_ACTIONS.md  
 **Goal:** Systematic security hardening and stability improvements for the aubio codebase
 
 ---
@@ -632,7 +632,7 @@ jobs:
 
 ## Appendix A: Security Fixes Already Applied
 
-These items are documented in SECURITY_REVIEW.md as completed:
+These items are documented in SECURITY/REVIEW.md as completed:
 
 1. ✅ **Buffer over-read in aubio_sampler_load** (HIGH) - Fixed memory allocation and null termination
 2. ✅ **Inconsistent null termination in new_aubio_tempo** (MEDIUM) - Fixed defensive programming

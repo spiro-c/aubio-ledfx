@@ -95,7 +95,7 @@ before-all = """
     vcpkg integrate bash && \
     echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     VCPKG_BUILD_TYPE=release \
-    vcpkg install --overlay-triplets=./custom-triplets \
+    vcpkg install --overlay-triplets=./vcpkg-triplets \
     --triplet=$VCPKG_TRIPLET \
     --feature-flags="versions,manifests" \
     --x-manifest-root=. \
@@ -147,7 +147,7 @@ before-all = """
     vcpkg integrate bash && \
     echo "=== Installing vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     VCPKG_BUILD_TYPE=release \
-    vcpkg install --overlay-triplets=./custom-triplets \
+    vcpkg install --overlay-triplets=./vcpkg-triplets \
     --feature-flags="versions,manifests" \
     --triplet=$VCPKG_TRIPLET \
     --x-manifest-root=. \

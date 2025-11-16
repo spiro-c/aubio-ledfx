@@ -13,6 +13,7 @@
       ]
     },
     "libsamplerate",
+    "fftw3",
     {
       "name": "mp3lame",
       "platform": "linux"
@@ -32,6 +33,18 @@
     {
       "name": "libflac",
       "platform": "linux"
+    },
+    {
+      "name": "rubberband"
+    },
+    {
+      "name": "ffmpeg",
+      "default-features": false,
+      "features": [
+        "avcodec",
+        "avformat",
+        "swresample"
+      ]
     }
   ]
 }

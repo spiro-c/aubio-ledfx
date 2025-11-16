@@ -162,7 +162,7 @@ before-all = """
     --x-install-root=/opt/vcpkg/installed && \
     echo "=== List vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     vcpkg list && \
-    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:{project}/vcpkg_installed/arm64-linux-pic/lib:{project}/vcpkg_installed/arm64-linux-release/lib" && \
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/arm64-linux-pic/lib:/opt/vcpkg/installed//arm64-linux/lib" && \
     rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/downloads && \
     echo "=== Vcpkg installation complete ===" && \
     echo "=== List curent dir ls -la ===" && \
@@ -171,12 +171,14 @@ before-all = """
     ls -la /opt/vcpkg/ && \
     echo "=== List /opt/vcpkg/installed dir ls -la /opt/vcpkg/installed ===" && \
     ls -la /opt/vcpkg/installed && \
-    echo "=== List /opt/vcpkg/vcpkg_installed/ dir ls -la /opt/vcpkg/vcpkg_installed/ ===" && \
-    ls -la /opt/vcpkg/vcpkg_installed/ && \
+    echo "=== List /opt/vcpkg/installed/$VCPKG_DEFAULT_TRIPLET dir ls -la /opt/vcpkg/installed/$VCPKG_DEFAULT_TRIPLET ===" && \
+    ls -la /opt/vcpkg/installed/$VCPKG_DEFAULT_TRIPLET && \
+    echo "=== List /opt/vcpkg/installed/arm64-linux dir ls -la /opt/vcpkg/installed/arm64-linux ===" && \
+    ls -la /opt/vcpkg/installed/arm64-linux && \
     echo "Installed packages in $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/:" && \
-    ls -la {project}/vcpkg_installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
     echo "Static libraries:" && \
-    ls -la {project}/vcpkg_installed/$VCPKG_DEFAULT_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
+    ls -la $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/lib/*.a 2>/dev/null | head -20 || echo "No static libraries found"
 """
 environment = {PKG_CONFIG_PATH = "$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALL/share/pkgconfig:$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-pic/lib/pkgconfig:$VCPKG_INSTALLATION_ROOT/installed/arm64-linux-release/share/pkgconfig"}
 

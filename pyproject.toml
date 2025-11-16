@@ -167,12 +167,12 @@ before-all = """
     echo "=== Vcpkg installation complete ===" && \
     echo "=== List curent dir ls -la ===" && \
     ls -la  && \
-    echo "=== List {project}/vcpkg_installed/ dir ls -la {project}/vcpkg_installed/ ===" && \
-    ls -la {project}/vcpkg_installed/ && \
-    echo "=== List {project}/vcpkg_installed/arm64-linux-release dir ls -la {project}/vcpkg_installed/arm64-linux-release ===" && \
-    ls -la {project}/vcpkg_installed/installed/arm64-linux-release && \
-    echo "=== List {project}/vcpkg_installed/installed/$VCPKG_DEFAULT_TRIPLET dir ls -la {project}/vcpkg_installed/installed/$VCPKG_DEFAULT_TRIPLET ===" && \
-    ls -la {project}/vcpkg_installed/$VCPKG_DEFAULT_TRIPLET && \
+    echo "=== List /opt/vcpkg/ dir ls -la /opt/vcpkg/ ===" && \
+    ls -la /opt/vcpkg/ && \
+    echo "=== List /opt/vcpkg/installed dir ls -la /opt/vcpkg/installed ===" && \
+    ls -la /opt/vcpkg/installed && \
+    echo "=== List /opt/vcpkg/vcpkg_installed/ dir ls -la /opt/vcpkg/vcpkg_installed/ ===" && \
+    ls -la /opt/vcpkg/vcpkg_installed/ && \
     echo "Installed packages in $VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET/:" && \
     ls -la {project}/vcpkg_installed/$VCPKG_DEFAULT_TRIPLET/lib/pkgconfig/ 2>/dev/null || echo "No pkgconfig directory found" && \
     echo "Static libraries:" && \

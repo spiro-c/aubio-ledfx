@@ -87,6 +87,7 @@ before-all = """
     VCPKG_INSTALLATION_ROOT="/opt/vcpkg" && \
     PATH="${PATH}:/opt/vcpkg" && \
     VCPKG_DEFAULT_TRIPLET="x64-linux-pic" && \
+    VCPKG_DEFAULT_HOST_TRIPLET="x64-linux-release" && \
     bootstrap-vcpkg.sh -disableMetrics && \
     mkdir -p /root/.vcpkg/ $HOME/.vcpkg && \
     touch /root/.vcpkg/vcpkg.path.txt $HOME/.vcpkg/vcpkg.path.txt && \
@@ -96,8 +97,10 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=./custom-triplets \
     --feature-flags="versions,manifests" \
-    --x-install-root=/opt/vcpkg/installed  \
+    --x-manifest-root=. \
+    --x-install-root=/opt/vcpkg/installed \
     --clean-after-build && \
+    echo "=== List vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     vcpkg list && \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/x64-linux-pic/lib:/opt/vcpkg/installed/x64-linux/lib" && \
     rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/downloads && \
@@ -146,8 +149,10 @@ before-all = """
     VCPKG_BUILD_TYPE=release \
     vcpkg install --overlay-triplets=./custom-triplets \
     --feature-flags="versions,manifests" \
-    --x-install-root=/opt/vcpkg/installed  \
+    --x-manifest-root=. \
+    --x-install-root=/opt/vcpkg/installed \
     --clean-after-build && \
+    echo "=== List vcpkg dependencies for $AUDITWHEEL_ARCH (triplet: $VCPKG_DEFAULT_TRIPLET) ===" && \
     vcpkg list && \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/vcpkg/installed/arm64-linux-pic/lib:/opt/vcpkg/installed/arm64-linux-release/lib" && \
     rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/downloads && \

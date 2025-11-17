@@ -98,26 +98,6 @@ jobs:
           restore-keys: |
             vcpkg-installed-${{ matrix.os }}-${{ matrix.arch }}-
 
-      # - name: Cache vcpkg installed packages (macOS ARM64)
-      #   if: runner.os == 'macOS' && matrix.arch == 'arm64'
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ github.workspace }}/vcpkg_installed
-      #     key: vcpkg-installed-macos-arm64-${{ hashFiles('vcpkg.json', 'vcpkg-triplets/*.cmake') }}
-      #     restore-keys: |
-      #       vcpkg-installed-macos-arm64-
-
-      # # Cache vcpkg_installed directory for Windows
-      # - name: Cache vcpkg installed packages (Windows)
-      #   if: runner.os == 'Windows'
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ github.workspace }}/vcpkg_installed
-      #     key: vcpkg-installed-windows-${{ matrix.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-triplets/*.cmake') }}
-      #     restore-keys: |
-      #       vcpkg-installed-windows-${{ matrix.arch }}-
-
-      # macOS: Install build tools needed by vcpkg
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -135,18 +115,7 @@ jobs:
           echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.macoosx_deployment_target }}" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}/share/pkgconfig" >> $GITHUB_ENV
-      # - name: Install vcpkg dependencies (macOS ARM64)
-      #   if: runner.os == 'macOS' && matrix.arch == 'arm64'
-      #   env:
-      #     MACOSX_DEPLOYMENT_TARGET: "11.0"
-      #     VCPKG_BUILD_TYPE: "release"
-      #   run: |
-      #     echo "Building vcpkg dependencies for macOS ARM64 with deployment target ${{ env.MACOSX_DEPLOYMENT_TARGET }}"
-      #     $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=arm64-osx
-      #     echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
-      #     echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/arm64-osx" >> $GITHUB_ENV
-      #     echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/arm64-osx/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/arm64-osx/share/pkgconfig" >> $GITHUB_ENV
-     
+
       - name: Build wheels
         uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # 3.2.1
         env:

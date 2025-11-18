@@ -78,7 +78,7 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 #          These are transitive dependencies of libsndfile[external-libs] that must be installed
 #          to avoid undefined symbol errors during static linking
 before-all = """
-    dnf install -y git zip unzip tar curl make nasm && \
+    dnf install -y git zip unzip tar curl make nasm
     # if [ ! -d /tmp/vcpkg ]; then
     #     git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg && \
     #     cd /tmp/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics

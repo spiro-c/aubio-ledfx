@@ -69,6 +69,7 @@ jobs:
             container: "ci/manylinux_2_28_aarch64-vcpkg-aubio.Dockerfile"
           # Windows AMD64
           - os: windows-latest
+            triplet: x64-windows-release
             arch: AMD64
             cibw_archs: "AMD64"
           # macOS x86_64 (Intel)
@@ -145,18 +146,19 @@ jobs:
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
         run: |
+          echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.macoosx_deployment_target }}" >> $GITHUB_ENV
           # Install nasm (required by vcpkg for ffmpeg assembly optimizations)
           brew install nasm
 
       # macOS vcpkg setup - build dependencies from source with correct deployment target
       - name: Install vcpkg dependencies ${{ matrix.os }} ${{ matrix.arch }}
-        if: runner.os == 'macOS'
+        if: runner.os != 'Linux'
+        shell: bash
         env:
           VCPKG_BUILD_TYPE: "release"
         run: |
           echo "Building vcpkg dependencies for ${{ matrix.os }} ${{ matrix.arch }} with deployment target ${{ matrix.macoosx_deployment_target }}"
           $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet=${{ matrix.triplet }}
-          echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.macoosx_deployment_target }}" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}/lib/pkgconfig:${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}/share/pkgconfig" >> $GITHUB_ENV
 

@@ -125,7 +125,7 @@ environment = { PKG_CONFIG_PATH = "$VCPKG_INSTALL/lib/pkgconfig:$VCPKG_INSTALL/s
 # Use built-in triplet x64-windows-release for release-only builds with dynamic libs
 # (rubberband requires dynamic linking on Windows)
 before-all = [
-    "cd {project} && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-release",
+    # "cd {project} && if not exist vcpkg_installed %VCPKG_INSTALLATION_ROOT%\\vcpkg.exe install --triplet=x64-windows-release",
     "dir {project}\\vcpkg_installed\\x64-windows-release\\lib\\pkgconfig",
 ]
 
